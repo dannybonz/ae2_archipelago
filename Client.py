@@ -70,7 +70,6 @@ class AE2Context(CommonContext):
                     caught_monkeys = args["keys"].get(f"ae2_caught_{self.team}_{self.slot}", {})
                     if caught_monkeys != None:
                         self.interface.caught_monkeys = set(caught_monkeys)
-                    print(self.interface.caught_monkeys)
 
             self.connection_state = "ready"
 
@@ -140,7 +139,6 @@ async def check_game(ctx) -> None:
         if not (ctx.slot and ctx.connection_state == "ready"):
             if ctx.connection_state == "request":
                 #Update death link
-                print(ctx.deathlink_enabled)
                 await ctx.update_death_link(ctx.deathlink_enabled)
 
                 #Request Data Storage
