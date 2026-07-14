@@ -1,4 +1,4 @@
-import socket, struct
+import socket, struct, platform
 from .Monkeys import monkeys, monkey_from_name, monkey_from_id
 from .Levels import level_from_name, levels
 
@@ -144,6 +144,7 @@ class AE2Interface:
 
         self.deathlink_enabled = False
         self.deathlink_blocked = False
+        self.deathlink_queued = False
         self.deaths = 0
         self.previous_lives = -1
 
@@ -157,8 +158,22 @@ class AE2Interface:
 
     def connect_to_pcsx2(self) -> bool:
         try:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect(("127.0.0.1", 28011))
+            if platform.system() == "Linux":
+                self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                socket_name = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
+                if os.access(socket_name + "/pcsx2.sock", os.R_OK): #Default/AppImage Socket Path
+                    socket_name += "/pcsx2.sock"                
+                else: #Flatpak Socket Path
+                    socket_name += "/.flatpak/net.pcsx2.PCSX2/xdg-run"
+                    socket_name += "/pcsx2.sock"
+            elif platform.system() == "Darwin":
+                self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                socket_name = os.environ.get("TMPDIR", "/tmp")
+                socket_name += "/pcsx2.sock"
+            else:
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                socket_name = ("127.0.0.1", 28011)
+            self.socket.connect(socket_name)
             return True
         except Exception as e:
             print(f"PCSX2 connection failed with error: {e}")
@@ -173,6 +188,7 @@ class AE2Interface:
                 response = self.socket.recv(64)
 
                 game_id = response[9:-1].decode("ascii", errors="ignore")
+                print(f"Detected Game ID: {game_id}")
                 if game_id == "SCES-50885":
                     self.game_region = "PAL"
                     self.connected = True
@@ -285,13 +301,18 @@ class AE2Interface:
         self.unlocked_gadgets.add(gadget_name)
         if gadget_name == "Water Net":
             self.can_swim = True
-        else:
-            self.auto_equip()
             
     def auto_equip(self) -> None:
         currently_equipped = {}
         for face_button in equipped_gadget_addresses:
             currently_equipped[face_button] = self.read_u8(equipped_gadget_addresses[face_button][self.game_region])
+            if currently_equipped[face_button] == 1 and not "Stun Club" in self.unlocked_gadgets:
+                if self.read_u8(misc_addresses["equipped"][self.game_region]) == 1: #Holding the Stun Club
+                    self.write_u8(misc_addresses["selected_face_button"][self.game_region], 2) #Highlight the X button
+                    self.write_u8(misc_addresses["equipped"][self.game_region], 2) #Put the net in your hand
+                self.write_u8(equipped_gadget_addresses[face_button][self.game_region], 0) #Set this face button to nothing
+                currently_equipped[face_button] = 0
+
         for gadget_name in [gadget_name for gadget_name in self.unlocked_gadgets if gadget_name in gadget_ids]:
             if any(equipped_gadget_id == 0 for equipped_gadget_id in currently_equipped.values()): #Empty space available
                 newly_received_gadget_id = gadget_ids[gadget_name]
@@ -303,11 +324,6 @@ class AE2Interface:
     def trigger_falloff(self) -> None:
         self.write_u8(misc_addresses["camera_state"][self.game_region], 0) #Freeze camera in place
         self.write_u8(misc_addresses["y_position"][self.game_region], 255) #Teleport you below the death barrier
-
-    def trigger_deathlink(self) -> None:
-        self.write_u8(misc_addresses["health"][self.game_region], 0) #Set health to 0
-        self.trigger_falloff()
-        self.deathlink_blocked = True
 
     def enforce_game_state(self) -> None:
         current_screen = self.read_u8(misc_addresses["screen"][self.game_region])
@@ -342,13 +358,6 @@ class AE2Interface:
             elif self.previous_level_select_location != -1:
                 self.write_u8(misc_addresses["selected"][self.game_region], self.previous_level_select_location)
 
-            if not "Stun Club" in self.unlocked_gadgets:
-                if self.read_u8(misc_addresses["equipped"][self.game_region]) == 1: #Holding the Stun Club
-                    self.write_u8(misc_addresses["selected_face_button"][self.game_region], 2) #Highlight the X button
-                    self.write_u8(misc_addresses["equipped"][self.game_region], 2) #Put the net in your hand
-
-                if self.read_u8(equipped_gadget_addresses["triangle"][self.game_region]) == 1: #Stun Club in Triangle spot
-                    self.write_u8(equipped_gadget_addresses["triangle"][self.game_region], 0) #Set Triangle to nothing
             self.auto_equip()
 
         elif current_screen != 31: #In a level
@@ -357,6 +366,14 @@ class AE2Interface:
             #Swimming Prevention
             if self.can_swim == False and self.read_u8(misc_addresses["air_meter_showing"][self.game_region]) != 0:
                 self.trigger_falloff()
+
+            self.auto_equip()
+
+            if self.deathlink_queued:
+                self.write_u8(misc_addresses["health"][self.game_region], 0) #Set health to 0
+                self.trigger_falloff()
+                self.deathlink_blocked = True
+        self.deathlink_queued = False
 
         #Update character state
         self.write_u8(misc_addresses["visited"][self.game_region], 255) #Stops gadgets being taken away from you (except Power Punch - you need to be post game for that)

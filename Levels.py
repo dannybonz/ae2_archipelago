@@ -77,9 +77,9 @@ levels = [
     #Vita-Z Factory
     Level(name = "Vita-Z Factory", target_address = {"PAL": 0xC63800, "NTSC": 0xC63A80}, room_entrances = [
         #Entry
-        RoomEntrance(name = "Entry from Spawn", value = 0x17, connection_requirements = {"Tunnel from Entry": [[]], "Arena from Entry": [["Power Punch"], ["*Air Crawl", "*Hard"]]}),
-        RoomEntrance(name = "Entry from Tunnel", connection_requirements = {"Tunnel from Entry": [[]], "Arena from Entry": [["Power Punch"], ["*Air Crawl", "*Hard"]]}),
-        RoomEntrance(name = "Entry from Arena", connection_requirements = {"Tunnel from Entry": [[]], "Arena from Entry": [["Power Punch"], ["*Air Crawl", "*Hard"]]}),
+        RoomEntrance(name = "Entry from Spawn", value = 0x17, connection_requirements = {"Tunnel from Entry": [["Sky Flyer"], ["*Gear"], ["*Air Crawl"]], "Arena from Entry": [["Power Punch"], ["*Air Crawl", "*Hard"]]}),
+        RoomEntrance(name = "Entry from Tunnel", connection_requirements = {"Tunnel from Entry": [["Sky Flyer"], ["*Gear"], ["*Air Crawl"]], "Arena from Entry": [["Power Punch"], ["*Air Crawl", "*Hard"]]}),
+        RoomEntrance(name = "Entry from Arena", connection_requirements = {"Tunnel from Entry": [["Sky Flyer"], ["*Gear"], ["*Air Crawl"]], "Arena from Entry": [["Power Punch"], ["*Air Crawl", "*Hard"]]}),
         
         #Tunnel
         RoomEntrance(name = "Tunnel from Entry", value = 0x18, connection_requirements = {"Entry from Tunnel": [[]], "Arena from Tunnel": [[]]}),

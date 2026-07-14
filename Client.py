@@ -56,6 +56,8 @@ class AE2Context(CommonContext):
             self.deathlink_enabled = self.slot_data["deathlink_enabled"]
             self.interface.deathlink_enabled = self.deathlink_enabled
 
+            display_connection_status_labels(self)
+
         #Data Storage retrieved
         if cmd == "Retrieved" and self.connection_state == "requested":
             if "keys" in args:
@@ -72,6 +74,7 @@ class AE2Context(CommonContext):
                         self.interface.caught_monkeys = set(caught_monkeys)
 
             self.connection_state = "ready"
+            display_connection_status_labels(self)
 
     async def server_auth(self, password_requested : bool = False) -> None:
         if password_requested and not self.password:
@@ -108,12 +111,13 @@ async def interface_sync_task(ctx) -> None:
     ctx.status_bar = MDGridLayout(rows=1, size_hint_y = None, height = dp(50), spacing = dp(5), padding = dp(5),)
     ctx.ui.grid.add_widget(ctx.status_bar)
     
-    ctx.level_label = MDLabel(halign="center", role="large")
-    ctx.monkey_label = MDLabel(halign="center", role="large")
+    ctx.level_label = MDLabel(halign="center", role="large", markup = True)
+    ctx.monkey_label = MDLabel(halign="center", role="large", markup = True)
 
     ctx.status_bar.add_widget(ctx.level_label)
     ctx.status_bar.add_widget(ctx.monkey_label)
 
+    display_connection_status_labels(ctx)
     ctx.player_instruction("Beginning communication with PCSX2...")
     ctx.interface.connect_to_pcsx2()
 
@@ -125,7 +129,7 @@ async def interface_sync_task(ctx) -> None:
             else:
                 await reconnect_game(ctx)
         except ConnectionError:
-            await ctx.interface.disconnected()
+            ctx.interface.disconnected()
         except Exception as e:
             if isinstance(e, RuntimeError):
                 logger.error(str(e))
@@ -144,6 +148,7 @@ async def check_game(ctx) -> None:
                 #Request Data Storage
                 ctx.connection_state = "requested"
                 await ctx.send_msgs([{"cmd": "Get", "keys": [f"ae2_processed_{ctx.team}_{ctx.slot}", f"ae2_caught_{ctx.team}_{ctx.slot}"]}])
+            display_connection_status_labels(ctx)
             await asyncio.sleep(1)      
             return
 
@@ -205,7 +210,7 @@ async def check_game(ctx) -> None:
         ctx.interface.enforce_game_state()
 
         if ctx.deathlink_pending == True:
-            ctx.interface.trigger_deathlink()
+            ctx.interface.deathlink_queued = True
             ctx.deathlink_pending = False
         elif ctx.deathlink_enabled and ctx.interface.deaths > ctx.sent_deaths:
             ctx.sent_deaths = ctx.interface.deaths
@@ -216,11 +221,32 @@ async def check_game(ctx) -> None:
             logger.info("You have unlocked the Final Showdown with Specter! Go get him!")
     else:
         ctx.player_instruction("You are not currently connected to an Archipelago server. Connect to an Archipelago server now!")
+        ctx.connection_state = "none"
+        display_connection_status_labels(ctx)
+
+def display_connection_status_labels(ctx) -> None:
+    #AP Connection
+    if ctx.slot:
+        if ctx.connection_state == "ready":
+            ctx.level_label.text = "[color=00ff00]Connected to Archipelago[/color]"
+        else:
+            ctx.level_label.text = "[color=ffff00]Archipelago connection waiting...[/color]"
+    else:
+        ctx.level_label.text = "[color=ff0000]Not connected to Archipelago[/color]"
+
+    #PCSX2 Connection
+    if ctx.interface.connected:
+        ctx.monkey_label.text = "[color=00ff00]Connected to PCSX2[/color]"
+    else:
+        ctx.monkey_label.text = "[color=ff0000]Not connected to PCSX2[/color]"
+
 
 async def reconnect_game(ctx) -> None:
     ctx.player_instruction("Communication with PCSX2 failed. Please ensure that PCSX2 is open and Ape Escape 2 is loaded.")
+    display_connection_status_labels(ctx)
     await asyncio.sleep(5)
     ctx.interface.connect_to_pcsx2()
+    display_connection_status_labels(ctx)
 
 def launch() -> None:
     async def main() -> None:
