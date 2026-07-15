@@ -166,7 +166,7 @@ levels = [
         RoomEntrance(name = "Entry from Spawn", value = 0x1D, connection_requirements = {"Ship from Entry": [[]], "Bananarang Room from Entry": [["Water Net"], ["*Air Crawl"]], "Changing Hut from Entry": [[]]}),
         RoomEntrance(name = "Entry from Ship", connection_requirements = {"Ship from Entry": [[]], "Bananarang Room from Entry": [["Water Net"], ["*Air Crawl"]], "Changing Hut from Entry": [[]]}),
         RoomEntrance(name = "Entry from Bananarang Room", connection_requirements = {"Ship from Entry": [["Water Net"], ["*Air Crawl"]], "Bananarang Room from Entry": [["Water Net"], ["*Air Crawl"]], "Changing Hut from Entry": [["Water Net"], ["*Air Crawl"]]}),
-        RoomEntrance(name = "Entry from Changing Hut", connection_requirements = {"Ship from Entry": [[]], "Bananarang Room from Entry": [[]], "Changing Hut from Entry": [[]]}),
+        RoomEntrance(name = "Entry from Changing Hut", connection_requirements = {"Ship from Entry": [[]], "Bananarang Room from Entry": [["Water Net"], ["*Air Crawl"]], "Changing Hut from Entry": [[]]}),
 
         #Hut
         RoomEntrance(name = "Changing Hut from Entry", value = 0x1E, connection_requirements = {"Entry from Changing Hut": [[]]}),
