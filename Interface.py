@@ -1,6 +1,7 @@
-import socket, struct, platform
+import socket, struct, platform, os
 from .Monkeys import monkeys, monkey_from_name, monkey_from_id
 from .Levels import level_from_name, levels
+from .Phones import phone_from_name
 
 gadget_addresses = {
     "Stun Club": {"PAL": 0x4D2533, "NTSC": 0x4D1333},
@@ -34,6 +35,7 @@ gadget_tutorial_addresses = { #Putting these to 1 prevents the gadget tutorial f
 }
 
 gadget_ids = {"Stun Club": 1, "Monkey Net": 2, "Monkey Radar": 3, "Dash Hoop": 4, "Catapult": 5, "R.C. Car": 6, "Sky Flyer": 7, "Bananarang": 8, "Water Cannon": 9, "Electro Magnet": 10, "Power Punch": 11}
+gadget_from_id = {gadget_id: gadget for gadget, gadget_id in gadget_ids.items()}
 
 equipped_gadget_addresses = {
     "cross": {"PAL": 0x4D5F24, "NTSC": 0x4D4D24},
@@ -63,7 +65,10 @@ misc_addresses = {
     "natsumi_introduced": {"PAL": 0x3B366D, "NTSC": 0x3B216D}, #0 = Natsumi hasn't done her introduction, 1 = Natsumi has done her introduction
     "explosive_pellets": {"PAL": 0x3E19A9, "NTSC": 0x3E0699},
     "guided_pellets": {"PAL": 0x3E19AA, "NTSC": 0x3E069A},
-    "y_velocity": {"PAL": 0x4D5D14, "NTSC": 0x4D4BC7}
+    "y_velocity": {"PAL": 0x4D5D14, "NTSC": 0x4D4BC7},
+    "jump_state": {"PAL": 0x4D5D9C, "NTSC": 0x4D4B9C},
+    "message_info_pointer": {"PAL": 0x3DE2CC, "NTSC": 0x3DCF6C},
+    "gadget_position": {"PAL": 0x4D5F63, "NTSC": 0x4D4D63}
 }
 
 kakeru_addresses = [  # Set these all to 1 if playing as Kakeru
@@ -116,7 +121,11 @@ kakeru_addresses = [  # Set these all to 1 if playing as Kakeru
     {"PAL": 0x3E1ECD, "NTSC": 0x3E0BBD},
 ]
 
-#4D5D9C (PAL) 4D4B9C (NTSC) - tracks jump state, could use for future Double Jump item
+#Room transitions addresses (NTSC)
+#3B2120 - room transition?
+#19BB68 - something transition related
+#3B02A1 - music table
+#3B20D4 - set this to 5 and it reloads the room
 
 class AE2Interface:
 
@@ -155,6 +164,9 @@ class AE2Interface:
 
         self.previous_level_select_location = -1
         self.unlocked_levels = 0
+
+        self.used_message_info_pointers = []
+        self.read_phones = set()
 
     def connect_to_pcsx2(self) -> bool:
         try:
@@ -219,6 +231,14 @@ class AE2Interface:
             self.disconnected()
         else:
             return int.from_bytes(data[-4:], "little")
+
+    def read_u64(self, address): #Read a 64-bit value
+        self.socket.sendall((9).to_bytes(4, "little") + (3).to_bytes(1, "little") + address.to_bytes(4, "little"))
+        data = self.recv_full()
+        if len(data) < 8:
+            self.disconnected()
+        else:
+            return int.from_bytes(data[-8:], "little")
 
     def write_u8(self, address, value): #Write an 8-bit value
         self.socket.sendall((10).to_bytes(4, "little") + (4).to_bytes(1, "little") + address.to_bytes(4, "little") + value.to_bytes(1, "little"))
@@ -304,14 +324,35 @@ class AE2Interface:
             
     def auto_equip(self) -> None:
         currently_equipped = {}
+        legal_face_buttons = []
+        illegal_face_buttons = []
+
         for face_button in equipped_gadget_addresses:
             currently_equipped[face_button] = self.read_u8(equipped_gadget_addresses[face_button][self.game_region])
-            if currently_equipped[face_button] == 1 and not "Stun Club" in self.unlocked_gadgets:
-                if self.read_u8(misc_addresses["equipped"][self.game_region]) == 1: #Holding the Stun Club
-                    self.write_u8(misc_addresses["selected_face_button"][self.game_region], 2) #Highlight the X button
-                    self.write_u8(misc_addresses["equipped"][self.game_region], 2) #Put the net in your hand
-                self.write_u8(equipped_gadget_addresses[face_button][self.game_region], 0) #Set this face button to nothing
-                currently_equipped[face_button] = 0
+            if currently_equipped[face_button] in gadget_from_id and not gadget_from_id[currently_equipped[face_button]] in self.unlocked_gadgets: #You have a gadget equipped that you shouldn't
+                illegal_face_buttons.append(face_button)
+            else:
+                legal_face_buttons.append(face_button)
+
+        try:
+            selected_face_button = ["triangle", "circle", "cross", "square"][self.read_u8(misc_addresses["selected_face_button"][self.game_region])]
+        except:
+            selected_face_button = None
+
+        for illegal_face_button in illegal_face_buttons:
+            if selected_face_button == illegal_face_button: #Selecting the illegal button
+                if len(legal_face_buttons) > 0: #We can swap you to another gadget
+                    selected_face_button = legal_face_buttons[0]
+                    self.write_u8(misc_addresses["selected_face_button"][self.game_region], {"triangle": 0, "circle": 1, "cross": 2, "square": 3}[selected_face_button]) #Highlight a legal button
+                    self.write_u8(misc_addresses["equipped"][self.game_region], currently_equipped[selected_face_button]) #Put the chosen gadget in your hand
+                    self.write_u8(equipped_gadget_addresses[illegal_face_button][self.game_region], 0) #Set the illegal face button to nothing
+                    currently_equipped[illegal_face_button] = 0
+                else: #We can't swap you to another gadget right now, so just put nothing there
+                    self.write_u8(equipped_gadget_addresses[illegal_face_button][self.game_region], 0) #Set the illegal face button to nothing
+                    self.write_u8(misc_addresses["equipped"][self.game_region], 0) #Put nothing in your hands
+                    currently_equipped[illegal_face_button] = 0
+            else:
+                self.write_u8(equipped_gadget_addresses[illegal_face_button][self.game_region], 0) #Put nothing there
 
         for gadget_name in [gadget_name for gadget_name in self.unlocked_gadgets if gadget_name in gadget_ids]:
             if any(equipped_gadget_id == 0 for equipped_gadget_id in currently_equipped.values()): #Empty space available
@@ -320,6 +361,10 @@ class AE2Interface:
                     face_button_to_use = next((face_button for face_button, equipped_gadget_id in currently_equipped.items() if equipped_gadget_id == 0), None)
                     self.write_u8(equipped_gadget_addresses[face_button_to_use][self.game_region], newly_received_gadget_id)
                     currently_equipped[face_button_to_use] = newly_received_gadget_id
+
+        if currently_equipped[selected_face_button] == 0: #Nothing
+            self.write_u8(misc_addresses["gadget_position"][self.game_region], 255) #Fly your gadget far away
+            self.write_u8(misc_addresses["selected_face_button"][self.game_region], 4)
 
     def trigger_falloff(self) -> None:
         self.write_u8(misc_addresses["camera_state"][self.game_region], 0) #Freeze camera in place
@@ -362,6 +407,15 @@ class AE2Interface:
 
         elif current_screen != 31: #In a level
             self.write_u8(misc_addresses["cleared"][self.game_region], 255) #Sets 255 levels to cleared - stops you getting taken to boss fights
+
+            #Check message phones
+            message_info_pointer = self.read_u32(misc_addresses["message_info_pointer"][self.game_region])
+            if message_info_pointer != None and message_info_pointer != 0 and not message_info_pointer in self.used_message_info_pointers:
+                message_name_pointer = self.read_u32(message_info_pointer + 0x8)
+                self.used_message_info_pointers.append(message_info_pointer)
+                phone_name = self.read_u64(message_name_pointer).to_bytes(8, "little").decode("ascii").rstrip("\x00")
+                if phone_name.strip() in phone_from_name:
+                    self.read_phones.add(phone_from_name[phone_name].id)
 
             #Swimming Prevention
             if self.can_swim == False and self.read_u8(misc_addresses["air_meter_showing"][self.game_region]) != 0:
@@ -422,6 +476,10 @@ class AE2Interface:
             hikaru_state = self.read_u8(misc_addresses["hikaru_state"][self.game_region])
             if (not self.air_crawl_allowed) and hikaru_state in [7, 8, 9] and self.read_u8(misc_addresses["y_velocity"][self.game_region]) != 0:
                 self.write_u8(misc_addresses["hikaru_state"][self.game_region], 0)
+
+            #Double Jump Prevention - future item?
+            #if hikaru_state == 4: #Jumping
+            #    self.write_u8(misc_addresses["jump_state"][self.game_region], 3) #Double jumped
 
             #Yellow Monkey check functions off victory
             if current_screen == 11 and hikaru_state == 49:

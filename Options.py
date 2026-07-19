@@ -42,16 +42,25 @@ class WorldKeyBehaviour(Choice):
     option_alternating = 2
     default = 2
 
+class MessagePhoneLocations(Toggle):
+    """
+    Adds locations for activating each message phone.
+    """
+    display_name = "Message Phone Locations"
+    default = False
+
 class StartingGadgets(OptionList):
     """
-    Determines which gadgets you will begin the game with, in addition to the Monkey Net.
+    Determines which gadgets you will begin the game with.
     You may enter "Random" multiple times to receive multiple random gadgets.
 
-    Valid names are: "Random", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"
+    Starting without the Monkey Net requires that message phone locations be enabled.
+
+    Valid names are: "Random", "Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"
     """
     display_name = "Starting Gadgets"
-    valid_keys = ["Random", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"]
-    default = ["Stun Club"]
+    valid_keys = ["Random", "Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"]
+    default = ["Monkey Net", "Stun Club"]
 
 class ShuffleWaterNet(Toggle):
     """
@@ -60,7 +69,7 @@ class ShuffleWaterNet(Toggle):
     """
     display_name = "Shuffle Water Net"
     default = True
-
+    
 class ShuffleAirCrawl(Toggle):
     """
     Determines whether to lock the Air Crawl glitch behind receiving an item.
@@ -145,6 +154,7 @@ class AE2Options(PerGameCommonOptions):
     goal: Goal
     level_shuffle: LevelShuffle
     world_key_behaviour: WorldKeyBehaviour
+    message_phone_locations: MessagePhoneLocations
     playable_character: PlayableCharacter
     starting_gadgets: StartingGadgets
     shuffle_water_net: ShuffleWaterNet
@@ -159,6 +169,6 @@ class AE2Options(PerGameCommonOptions):
 
 option_groups = [
     OptionGroup("AP Settings", [DeathLink]),
-    OptionGroup("Playthrough", [Goal, LevelShuffle, WorldKeyBehaviour, PlayableCharacter, StartingGadgets, ShuffleWaterNet, ShuffleAirCrawl]),
+    OptionGroup("Playthrough", [Goal, LevelShuffle, WorldKeyBehaviour, MessagePhoneLocations, PlayableCharacter, StartingGadgets, ShuffleWaterNet, ShuffleAirCrawl]),
     OptionGroup("Logic & Tricks", [LogicDifficulty, HiddenMonkeyLogic, DamageBoostLogic, AirCrawlLogic, BoostJumpingLogic, BoostFlyingLogic, LongJumpingLogic]),
 ]    

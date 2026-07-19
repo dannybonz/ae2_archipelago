@@ -31,80 +31,80 @@ def can_reach_connection(state, world, player, requirements):
     requirements = copy.deepcopy(requirements) #Fixes a UT oddity
 
     for item_group in requirements:
-        if "*Air Crawl" in item_group and air_crawl:
+        while "*Air Crawl" in item_group and air_crawl:
             item_group.remove("*Air Crawl")
 
-        if "*Damage Boost" in item_group and damage_boost:
+        while "*Damage Boost" in item_group and damage_boost:
             item_group.remove("*Damage Boost")
 
-        if "*Boost Fly" in item_group and boost_fly:
+        while "*Boost Fly" in item_group and boost_fly:
             item_group.remove("*Boost Fly")
 
-        if "*Boost Jump" in item_group and boost_jump:
+        while "*Boost Jump" in item_group and boost_jump:
             item_group.remove("*Boost Jump")
 
-        if "*Bull Fight" in item_group and (state.has("Catapult", player) or state.has("Stun Club", player) or state.has("Power Punch", player) or state.has("Dash Hoop", player) or (state.has("Sky Flyer", player) and expert)): #To attack the monkeys that get in bulls
+        while "*Bull Fight" in item_group and (state.has("Catapult", player) or state.has("Stun Club", player) or state.has("Power Punch", player) or state.has("Dash Hoop", player) or (state.has("Sky Flyer", player) and expert)): #To attack the monkeys that get in bulls
             item_group.remove("*Bull Fight")
 
-        if "*UFO" in item_group and (hard or state.has("Catapult", player) or state.has("Stun Club", player) or state.has("Power Punch", player)): #To attack the monkeys that get in UFOs
+        while "*UFO" in item_group and (hard or state.has("Catapult", player) or state.has("Stun Club", player) or state.has("Power Punch", player)): #To attack the monkeys that get in UFOs
             item_group.remove("*UFO")
 
-        if "*Gear" in item_group and (state.has("Stun Club", player) or state.has("Power Punch", player)): #To spin gears
+        while "*Gear" in item_group and (state.has("Stun Club", player) or state.has("Power Punch", player)): #To spin gears
             item_group.remove("*Gear")
 
-        if "*Punch" in item_group and (state.has("Power Punch", player) and (state.has("See-All Scope", player) or not hidden_monkey_logic)): #To find hidden Power Punch monkeys
+        while "*Punch" in item_group and (state.has("Power Punch", player) and (state.has("See-All Scope", player) or not hidden_monkey_logic)): #To find hidden Power Punch monkeys
             item_group.remove("*Punch")
 
-        if "*Radar" in item_group and (state.has("Monkey Radar", player) or not hidden_monkey_logic): #To find hidden monkeys
+        while "*Radar" in item_group and (state.has("Monkey Radar", player) or not hidden_monkey_logic): #To find hidden monkeys
             item_group.remove("*Radar")
 
-        if "*Attack" in item_group and (state.has("Stun Club", player) or state.has("Power Punch", player) or state.has("Dash Hoop", player)):
+        while "*Attack" in item_group and (state.has("Stun Club", player) or state.has("Power Punch", player) or state.has("Dash Hoop", player)):
             item_group.remove("*Attack")
 
-        if "*Hard" in item_group and hard:
+        while "*Hard" in item_group and hard:
             item_group.remove("*Hard")
 
-        if "*Expert" in item_group and expert:
+        while "*Expert" in item_group and expert:
             item_group.remove("*Expert")
 
-        if "*Non-Net" in item_group and (state.has("Stun Club", player) or state.has("Monkey Radar", player) or state.has("Dash Hoop", player) or state.has("Catapult", player) or state.has("Sky Flyer", player) or state.has("R.C. Car", player) or state.has("Bananarang", player) or state.has("Water Cannon", player) or state.has("Electro Magnet", player) or state.has("Power Punch", player)):
+        while "*Non-Net" in item_group and (state.has("Stun Club", player) or state.has("Monkey Radar", player) or state.has("Dash Hoop", player) or state.has("Catapult", player) or state.has("Sky Flyer", player) or state.has("R.C. Car", player) or state.has("Bananarang", player) or state.has("Water Cannon", player) or state.has("Electro Magnet", player) or state.has("Power Punch", player)):
             item_group.remove("*Non-Net")
 
         #Lookout Valley
-        if "*Valley Gap" in item_group and ((state.has("Sky Flyer", player) and state.has("Catapult", player)) or
+        while "*Valley Gap" in item_group and ((state.has("Sky Flyer", player) and state.has("Catapult", player)) or
                                             (expert and ((((state.has("Power Punch", player) or state.has("Sky Flyer", player)) and state.has("Water Net", player))) or state.has("Catapult", player))) or 
                                             (air_crawl) or 
                                             (expert and long_jump and (state.has("Pipotchi", player) or state.has("Stun Club", player)))):
             item_group.remove("*Valley Gap")
 
-        if "*Valley Island" in item_group and (state.has("Water Net", player) or
+        while "*Valley Island" in item_group and (state.has("Water Net", player) or
                                             (hard and state.has("Sky Flyer", player)) or 
                                             (air_crawl) or 
                                             (expert and long_jump)):
             item_group.remove("*Valley Island")
 
-        if "*Valley Boat" in item_group and (state.has("Water Net", player) or
+        while "*Valley Boat" in item_group and (state.has("Water Net", player) or
                                             (hard and state.has("Sky Flyer", player)) or 
                                             (air_crawl)):
             item_group.remove("*Valley Boat")
 
-        if "*Valley Button" in item_group and (state.has("Catapult", player) or
-                                            (hard and (state.has("Sky Flyer", player) or state.has("Stun Club", player))) or 
+        while "*Valley Button" in item_group and (state.has("Catapult", player) or
+                                            (hard and state.has("Water Net", player) and (state.has("Sky Flyer", player) or state.has("Stun Club", player))) or 
                                             (air_crawl)):
             item_group.remove("*Valley Button")
 
-        if "*Valley Stalag" in item_group and (state.has("R.C. Car", player) or
+        while "*Valley Stalag" in item_group and (state.has("R.C. Car", player) or
                                             (hard and state.has("Sky Flyer", player)) or 
                                             (air_crawl)):
             item_group.remove("*Valley Stalag")
 
         #Panic Pyramid
-        if "*Pyramid Sarcophagus" in item_group and (state.has("Catapult", player) or
+        while "*Pyramid Sarcophagus" in item_group and (state.has("Catapult", player) or
                                             (boost_fly and state.has("Sky Flyer", player) and hard)):
             item_group.remove("*Pyramid Sarcophagus")
 
         #Moon Base
-        if "*Moon Fire" in item_group and (state.has("Water Cannon", player) or
+        while "*Moon Fire" in item_group and (state.has("Water Cannon", player) or
                                             (damage_boost) or
                                             (air_crawl)):
             item_group.remove("*Moon Fire")
@@ -139,15 +139,19 @@ def create_regions(world: World) -> None:
                     connection_region = multiworld.get_region(f"{level.name} ({connection})", player)
                     room_entrance_region.connect(connecting_region = connection_region, rule = lambda state, room_entrance = room_entrance, connection = connection: can_reach_connection(state, world, player, room_entrance.connection_requirements[connection]))
 
-            for monkey in level.monkeys:
-                monkey_region = Region(f"{level.name} ({monkey.name})", player, multiworld)
-                monkey_region.locations += [AE2Location(player, monkey.get_location_name(), monkey.id, monkey_region)]
-                multiworld.regions.append(monkey_region)
+            level_locations = [] + level.monkeys
+            if world.options.message_phone_locations.value:
+                level_locations += level.phones
 
-                for connection in monkey.connection_requirements:
+            for location in level_locations:
+                location_region = Region(f"{level.name} ({location.name})", player, multiworld)
+                location_region.locations += [AE2Location(player, location.get_location_name(), location.id, location_region)]
+                multiworld.regions.append(location_region)
+
+                for connection in location.connection_requirements:
                     connection_region_name = f"{level.name} ({connection})"
                     connection_region = multiworld.get_region(connection_region_name, player)
-                    connection_region.connect(connecting_region = monkey_region, rule = lambda state, monkey = monkey, connection = connection: can_reach_connection(state, world, player, monkey.connection_requirements[connection]))
+                    connection_region.connect(connecting_region = location_region, rule = lambda state, location = location, connection = connection: can_reach_connection(state, world, player, location.connection_requirements[connection]))
 
             starting_entrance = "Entry from Spawn" #Random starting room will go here
             if level.name == "Final Showdown with Specter!":

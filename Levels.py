@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from .Monkeys import monkeys, Monkey    
+from .Phones import phones, Phone
 
 @dataclass
 class RoomEntrance:
@@ -12,6 +13,8 @@ class Level:
     name: str
     world_key_requirement: int = 0
     monkeys: list[Monkey] = field(default_factory = list)
+    phones: list[Phone] = field(default_factory = list)
+
     room_entrances: list[RoomEntrance] = field(default_factory = lambda: [RoomEntrance(name = "Entry from Spawn")])
     target_address: dict = field(default_factory = dict)
     is_boss: bool = False
@@ -307,7 +310,7 @@ levels = [
     Level(name = "The Lost World", target_address = {"PAL": 0xC63AA0, "NTSC": 0xC63D20}, room_entrances = [
         #Entry
         RoomEntrance(name = "Entry from Spawn", value = 0x3F, connection_requirements = {"Trees from Entry": [["Water Net"], ["*Air Crawl"]], "Pterodactyls from Entry": [[]]}),
-        RoomEntrance(name = "Entry from Trees", connection_requirements = {"Trees from Entry": [[]], "Pterodactyls from Entry": [[]]}),
+        RoomEntrance(name = "Entry from Trees", connection_requirements = {"Trees from Entry": [[]], "Pterodactyls from Entry": [["Water Net"], ["*Air Crawl"], ["Sky Flyer", "*Hard"]]}),
         RoomEntrance(name = "Entry from Pterodactyls", connection_requirements = {"Trees from Entry": [["Water Net"], ["*Air Crawl"]], "Pterodactyls from Entry": [[]]}),
 
         #Trees
@@ -358,7 +361,7 @@ levels = [
         RoomEntrance(name = "Final Room from Tank", value = 0x47, connection_requirements = {"Tank from Final Room": [[]], "Lobby from Final Room": [["Electro Magnet", "Catapult", "R.C. Car"], ["*Air Crawl"], ["Electro Magnet", "Catapult", "Sky Flyer", "*Boost Jump", "*Expert"]]})
     ]),
 
-    #Code C.H.I.M.P. - continue logic from here
+    #Code C.H.I.M.P.
     Level(name = "Code C.H.I.M.P.", target_address = {"PAL": 0xC63B30, "NTSC": 0xC63DB0}, room_entrances = [
         #Entry
         RoomEntrance(name = "Entry from Spawn", value = 0x48, connection_requirements = {"Base Entrance from Entry": [["*Air Crawl"], ["*Gear"]], "Moving Platforms from Entry": [["*Air Crawl"]]}),
@@ -472,3 +475,6 @@ level_from_name: dict[str, Level] = {level.name: level for level in levels}
 
 for monkey in monkeys:
     level_from_name[monkey.level].monkeys.append(monkey)
+
+for phone in phones:
+    level_from_name[phone.level].phones.append(phone)

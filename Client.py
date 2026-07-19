@@ -41,7 +41,11 @@ class AE2Context(CommonContext):
         if cmd == "Connected":
             #Init
             self.slot_data = args["slot_data"]  
-            self.previously_checked_locations = args["checked_locations"]
+            try:
+                self.previously_checked_locations = set(args["checked_locations"])
+            except:
+                self.previously_checked_locations = set()
+            
             self.processed_items = 0
             self.previously_processed_items = -1
             self.sent_deaths = 0
@@ -155,12 +159,14 @@ async def check_game(ctx) -> None:
         ctx.player_instruction("You are now connected and ready to play. Go ape!")
 
         #Check for unsent locations
-        new_locations = ctx.interface.caught_monkeys.difference(ctx.previously_checked_locations)
+        new_locations = ctx.interface.caught_monkeys.difference(ctx.previously_checked_locations).union(ctx.interface.read_phones.difference(ctx.previously_checked_locations))
 
         #If there are unsent locations, send them now
         if new_locations:
             await ctx.send_msgs([{"cmd" : "LocationChecks", "locations" : new_locations}])
             await ctx.send_msgs([{"cmd": "Set", "key": f"ae2_caught_{ctx.team}_{ctx.slot}", "default": {}, "want_reply": False, "operations": [{"operation": "replace", "value": ctx.interface.caught_monkeys}]}])
+
+        ctx.previously_checked_locations.update(new_locations)
 
         #Receive items from server
         for i in range (0, len(ctx.items_received)):

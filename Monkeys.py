@@ -7,12 +7,13 @@ class Monkey:
     address: dict = field(default_factory = dict)
     connection_requirements: dict[str, list[str]] = field(default_factory = lambda: {"Entry from Spawn": [[]]})
     room: str = "Entry"
+    net_requirement: int = 0 #0 = Can only be caught with Monkey Net, 1 = Water Net or Monkey Net requirements are listed, 2 = Water Net or Monkey Net interchangeable
     
     def get_location_name(self):
         if self.room == "Entry":
-            return self.level + ": " + self.name.strip(" ")
+            return f"{self.level}: {self.name.strip(" ")}"
         else:
-            return self.level + " (" + self.room + "): " + self.name.strip(" ")
+            return f"{self.level} ({self.room}): {self.name.strip(" ")}"
 
 monkeys = [
     #Liberty Island
@@ -36,8 +37,8 @@ monkeys = [
     Monkey(name = "Seanyboy", level = "Port Calm", address = {"PAL": 0x3E1A79, "NTSC": 0x3E0769}, connection_requirements = {"Entry from Spawn": [["Water Net"], ["*Air Crawl"], ["Sky Flyer", "*Hard"], ["*Expert"]], "Entry from Indoors": [["Water Net"]]}),
     Monkey(name = "Chili", level = "Port Calm", address = {"PAL": 0x3E1A77, "NTSC": 0x3E0767}, connection_requirements = {"Entry from Spawn": [["Water Net"], ["*Air Crawl"], ["Sky Flyer", "*Hard"], ["*Expert"]], "Entry from Indoors": [["Water Net"]]}),
     Monkey(name = "Beday", level = "Port Calm", address = {"PAL": 0x3E1A7A, "NTSC": 0x3E076A}, connection_requirements = {"Entry from Spawn": [["Water Net", "*Attack"], ["*Air Crawl"], ["Sky Flyer", "*Hard"], ["*Long Jump", "*Expert"], ["Pipotchi", "*Expert"]], "Entry from Indoors": [["Water Net"]]}),
-    Monkey(name = "Florence", level = "Port Calm", address = {"PAL": 0x3E1A78, "NTSC": 0x3E0768}, connection_requirements = {"Entry from Spawn": [["Water Net"], ["*Air Crawl", "*Hard"], ["*Expert"]], "Entry from Indoors": [["Water Net"]]}),
-    Monkey(name = "Punto", level = "Port Calm", address = {"PAL": 0x3E1A7B, "NTSC": 0x3E076B}, connection_requirements = {"Entry from Spawn": [["Water Net"], ["Sky Flyer", "*Hard"], ["*Air Crawl", "*Hard"], ["*Expert"]], "Entry from Indoors": [["Water Net"]]}),
+    Monkey(name = "Florence", level = "Port Calm", address = {"PAL": 0x3E1A78, "NTSC": 0x3E0768}, net_requirement = 2, connection_requirements = {"Entry from Spawn": [["Water Net"], ["*Air Crawl", "*Hard"], ["*Expert"]], "Entry from Indoors": [["Water Net"]]}),
+    Monkey(name = "Punto", level = "Port Calm", address = {"PAL": 0x3E1A7B, "NTSC": 0x3E076B}, net_requirement = 2, connection_requirements = {"Entry from Spawn": [["Water Net"], ["Sky Flyer", "*Hard"], ["*Air Crawl", "*Hard"], ["*Expert"]], "Entry from Indoors": [["Water Net"]]}),
     Monkey(name = "Lilo", level = "Port Calm", room = "Indoors", address = {"PAL": 0x3E1A7C, "NTSC": 0x3E076C}, connection_requirements = {"Indoors from Entry": [["Water Net"]]}),
     Monkey(name = "Manuel", level = "Port Calm", room = "Indoors", address = {"PAL": 0x3E1A7D, "NTSC": 0x3E076D}, connection_requirements = {"Indoors from Entry": [["Water Net", "*Punch"]]}),
 
@@ -106,7 +107,7 @@ monkeys = [
     Monkey(name = "Twiggy", level = "Ninja Hideout", address = {"PAL": 0x3E1AA3, "NTSC": 0x3E0793}, connection_requirements = {"Entry from Spawn": [[]], "Entry from Second Room": [["R.C. Car"], ["*Air Crawl"]]}),
     Monkey(name = "Harry Karry", level = "Ninja Hideout", address = {"PAL": 0x3E1AA4, "NTSC": 0x3E0794}, connection_requirements = {"Entry from Spawn": [["R.C. Car"], ["*Air Crawl"]], "Entry from Second Room": [[]]}),
     Monkey(name = "Chan", level = "Ninja Hideout", address = {"PAL": 0x3E1AA7, "NTSC": 0x3E0797}, connection_requirements = {"Entry from Spawn": [["R.C. Car", "Water Net"], ["*Air Crawl"], ["R.C. Car", "*Expert", "*Boost Fly"]], "Entry from Second Room": [["Water Net"], ["*Air Crawl"], ["*Expert", "*Boost Fly"]]}),
-    Monkey(name = "Duncan", level = "Ninja Hideout", address = {"PAL": 0x3E1AA6, "NTSC": 0x3E0796}, connection_requirements = {"Entry from Spawn": [["R.C. Car", "Water Net"], ["*Air Crawl"], ["R.C. Car", "Sky Flyer", "*Hard"], ["R.C. Car", "Pipotchi", "*Expert", "*Long Jump"]], "Entry from Second Room": [["R.C. Car", "Water Net"], ["*Air Crawl"], ["Sky Flyer", "*Hard"], ["Pipotchi", "*Expert", "*Long Jump"]]}),
+    Monkey(name = "Duncan", level = "Ninja Hideout", address = {"PAL": 0x3E1AA6, "NTSC": 0x3E0796}, net_requirement = 2, connection_requirements = {"Entry from Spawn": [["R.C. Car", "Water Net"], ["*Air Crawl"], ["R.C. Car", "Sky Flyer", "*Hard"], ["R.C. Car", "Pipotchi", "*Expert", "*Long Jump"]], "Entry from Second Room": [["R.C. Car", "Water Net"], ["*Air Crawl"], ["Sky Flyer", "*Hard"], ["Pipotchi", "*Expert", "*Long Jump"]]}),
     Monkey(name = "Somnia", level = "Ninja Hideout", address = {"PAL": 0x3E1AA5, "NTSC": 0x3E0795}, connection_requirements = {"Entry from Spawn": [["R.C. Car"]], "Entry from Second Room": [["R.C. Car"]]}),
     Monkey(name = "Hideyoshi", level = "Ninja Hideout", room = "Second Room", address = {"PAL": 0x3E1AAB, "NTSC": 0x3E079B}, connection_requirements = {"Second Room from Entry": [["*Attack"], ["*Hard"]], "Second Room from Third Room Start": [["*Attack"], ["*Hard"]], "Second Room from Third Room End": [["*Attack"], ["*Hard"]]}),
     Monkey(name = "Takashi", level = "Ninja Hideout", room = "Second Room", address = {"PAL": 0x3E1AAC, "NTSC": 0x3E079C}, connection_requirements = {"Second Room from Entry": [["*Attack"], ["*Hard"]], "Second Room from Third Room Start": [["*Attack"], ["*Hard"]], "Second Room from Third Room End": [["*Attack"], ["*Hard"]]}),
@@ -140,13 +141,13 @@ monkeys = [
 
     #Lookout Valley
     Monkey(name = "Olivia", level = "Lookout Valley", address = {"PAL": 0x3E1ABB, "NTSC": 0x3E07AB}, connection_requirements = {"Entry from Spawn": [["*Valley Gap", "*Valley Island"]], "Entry from Jungle End": [[]], "Entry from Jungle Start": [[]], "Entry from Cave Start": [["Sky Flyer"], ["Water Net"], ["*Air Crawl"]], "Entry from Cave End": [["Sky Flyer"], ["Water Net"], ["*Air Crawl"]]}),
-    Monkey(name = "Ally", level = "Lookout Valley", address = {"PAL": 0x3E1ABA, "NTSC": 0x3E07AA}, connection_requirements = {"Entry from Spawn": [["Catapult", "Sky Flyer", "Water Net"], ["*Air Crawl"]], "Entry from Jungle End": [["Water Net"], ["*Air Crawl"]], "Entry from Jungle Start": [["Water Net"], ["*Air Crawl"]], "Entry from Cave Start": [["Water Net"], ["*Air Crawl"]], "Entry from Cave End": [["Water Net"], ["*Air Crawl"]]}),
+    Monkey(name = "Ally", level = "Lookout Valley", address = {"PAL": 0x3E1ABA, "NTSC": 0x3E07AA}, connection_requirements = {"Entry from Spawn": [["*Valley Gap", "*Valley Island"]], "Entry from Jungle End": [["Water Net"], ["*Air Crawl"]], "Entry from Jungle Start": [["Water Net"], ["*Air Crawl"]], "Entry from Cave Start": [["Water Net"], ["*Air Crawl"]], "Entry from Cave End": [["Water Net"], ["*Air Crawl"]]}),
     Monkey(name = "Ty", level = "Lookout Valley", address = {"PAL": 0x3E1AB9, "NTSC": 0x3E07A9}, connection_requirements = {"Entry from Spawn": [[]], "Entry from Jungle End": [["Water Net"], ["*Air Crawl"], ["Sky Flyer"]], "Entry from Jungle Start": [["Water Net"], ["*Air Crawl"], ["Sky Flyer"]], "Entry from Cave End": [["Water Net"], ["*Air Crawl"], ["Sky Flyer"]], "Entry from Cave Start": [["Water Net"], ["*Air Crawl"], ["*Boost Fly", "*Hard"]]}),
     Monkey(name = "Livingstone", level = "Lookout Valley", address = {"PAL": 0x3E1ABD, "NTSC": 0x3E07AD}, connection_requirements = {"Entry from Spawn": [["Catapult", "Sky Flyer", "Power Punch"], ["*Air Crawl", "Power Punch"]], "Entry from Jungle End": [["Power Punch"]], "Entry from Jungle Start": [["Power Punch"]], "Entry from Cave Start": [["Sky Flyer", "Power Punch"], ["Water Net", "Power Punch"], ["*Air Crawl", "Power Punch"]], "Entry from Cave End": [["Sky Flyer", "Power Punch"], ["Water Net", "Power Punch"], ["*Air Crawl", "Power Punch"]]}),
     Monkey(name = "Louis", level = "Lookout Valley", room = "Jungle", address = {"PAL": 0x3E1AC0, "NTSC": 0x3E07B0}, connection_requirements = {"Jungle Start from Entry": [[]], "Jungle End from Entry": [[]]}),
     Monkey(name = "Lily", level = "Lookout Valley", room = "Jungle", address = {"PAL": 0x3E1ABF, "NTSC": 0x3E07AF}, connection_requirements = {"Jungle Start from Entry": [[]], "Jungle End from Entry": [[]]}),
     Monkey(name = "Gunn", level = "Lookout Valley", room = "Jungle", address = {"PAL": 0x3E1ABE, "NTSC": 0x3E07AE}, connection_requirements = {"Jungle Start from Entry": [["Catapult"], ["Stun Club"], ["Power Punch"], ["*Hard", "Dash Hoop"], ["*Hard", "R.C. Car"], ["*Hard", "Sky Flyer"], ["*Hard", "Water Cannon"], ["*Expert", "*Damage Boost"]], "Jungle End from Entry": [["Catapult"], ["Stun Club"], ["Power Punch"], ["*Hard", "Dash Hoop"], ["*Hard", "R.C. Car"], ["*Hard", "Sky Flyer"], ["*Hard", "Water Cannon"], ["*Expert", "*Damage Boost"]]}),
-    Monkey(name = "Gill", level = "Lookout Valley", room = "Cave", address = {"PAL": 0x3E1AC3, "NTSC": 0x3E07B3}, connection_requirements = {"Cave End from Entry": [["Water Net", "Catapult"], ["*Hard"]], "Cave Start from Entry": [["*Valley Button", "*Valley Stalag", "Catapult", "Water Net"], ["*Valley Button", "*Valley Stalag", "*Hard"]]}),
+    Monkey(name = "Gill", level = "Lookout Valley", room = "Cave", address = {"PAL": 0x3E1AC3, "NTSC": 0x3E07B3}, net_requirement = 1, connection_requirements = {"Cave End from Entry": [["Water Net", "Catapult"], ["*Hard", "*Damage Boost", "Monkey Net"]], "Cave Start from Entry": [["*Valley Button", "*Valley Stalag", "Catapult", "Water Net"], ["*Valley Button", "*Valley Stalag", "*Hard", "*Damage Boost", "Monkey Net"]]}),
     Monkey(name = "Chris", level = "Lookout Valley", room = "Cave", address = {"PAL": 0x3E1AC2, "NTSC": 0x3E07B2}, connection_requirements = {"Cave End from Entry": [[]], "Cave Start from Entry": [["*Valley Button", "*Valley Stalag", "Water Net"], ["*Valley Button", "*Valley Stalag", "Sky Flyer", "*Hard"], ["*Valley Button", "*Valley Stalag", "*Expert"]]}),
     Monkey(name = "Simian Tell", level = "Lookout Valley", room = "Cave", address = {"PAL": 0x3E1AC1, "NTSC": 0x3E07B1}, connection_requirements = {"Cave End from Entry": [["*Air Crawl"], ["R.C. Car", "Water Net"], ["*Boost Fly", "*Hard"], ["R.C. Car", "*Hard"]], "Cave Start from Entry": [["*Air Crawl"], ["*Valley Button", "*Valley Stalag", "R.C. Car"], ["*Valley Button", "*Valley Stalag", "*Boost Fly", "*Hard"]]}),
 
@@ -158,10 +159,10 @@ monkeys = [
     Monkey(name = "Erin", level = "The Blue Baboon", address = {"PAL": 0x3E1ACA, "NTSC": 0x3E07BA}, connection_requirements = {"Entry from Spawn": [["*Punch"]], "Entry from Bananarang Room": [["*Punch", "Water Net"], ["*Punch", "*Air Crawl"]], "Entry from Ship": [["*Punch"]], "Entry from Changing Hut": [["*Punch"]]}),
     Monkey(name = "Brad", level = "The Blue Baboon", address = {"PAL": 0x3E1AC6, "NTSC": 0x3E07B6}, connection_requirements = {"Entry from Spawn": [[]], "Entry from Bananarang Room": [[]], "Entry from Ship": [[]], "Entry from Changing Hut": [[]]}),
     Monkey(name = "Mulder", level = "The Blue Baboon", room = "Bananarang Room", address = {"PAL": 0x3E1B86, "NTSC": 0x3E0876}, connection_requirements = {"Bananarang Room from Entry": [["*UFO"]]}),
-    Monkey(name = "Rik", level = "The Blue Baboon", room = "Bananarang Room", address = {"PAL": 0x3E1B87, "NTSC": 0x3E0877}, connection_requirements = {"Bananarang Room from Entry": [["Bananarang", "Water Net"]]}),
+    Monkey(name = "Rik", level = "The Blue Baboon", room = "Bananarang Room", address = {"PAL": 0x3E1B87, "NTSC": 0x3E0877}, net_requirement = 1, connection_requirements = {"Bananarang Room from Entry": [["Bananarang", "Water Net"], ["*Air Crawl", "Sky Flyer", "*Expert", "Monkey Net"]]}),
     Monkey(name = "Montague", level = "The Blue Baboon", room = "Ship", address = {"PAL": 0x3E1ACB, "NTSC": 0x3E07BB}, connection_requirements = {"Ship from Entry": [["Water Net"], ["*Hard"]]}),
     Monkey(name = "Shorty", level = "The Blue Baboon", room = "Ship", address = {"PAL": 0x3E1ACD, "NTSC": 0x3E07BD}, connection_requirements = {"Ship from Entry": [["Bananarang"]]}),
-    Monkey(name = "Speedo", level = "The Blue Baboon", room = "Ship", address = {"PAL": 0x3E1ACC, "NTSC": 0x3E07BC}, connection_requirements = {"Ship from Entry": [["Water Net"], ["*Hard"]]}),
+    Monkey(name = "Speedo", level = "The Blue Baboon", room = "Ship", address = {"PAL": 0x3E1ACC, "NTSC": 0x3E07BC}, net_requirement = 1, connection_requirements = {"Ship from Entry": [["Monkey Net"], ["*Hard"]]}),
     Monkey(name = "Sooz", level = "The Blue Baboon", room = "Changing Hut", address = {"PAL": 0x3E1B3A, "NTSC": 0x3E082A}, connection_requirements = {"Changing Hut from Entry": [[]]}),
 
     #Pink Monkey Battle!
@@ -194,9 +195,9 @@ monkeys = [
     Monkey(name = "Norman", level = "Simian Citadel", address = {"PAL": 0x3E1AFC, "NTSC": 0x3E07EC}, connection_requirements = {"Entry from Spawn": [["*Gear", "Water Net"]], "Entry from Bullring": [[]], "Entry from Fountain": [["*Gear", "Water Net"]]}),
     Monkey(name = "Alex", level = "Simian Citadel", address = {"PAL": 0x3E1AF9, "NTSC": 0x3E07E9}, connection_requirements = {"Entry from Spawn": [["Bananarang"]], "Entry from Bullring": [["*Gear", "Water Net", "Bananarang"]], "Entry from Fountain": [["Bananarang"]]}),
     Monkey(name = "Jonah", level = "Simian Citadel", room = "Whale", address = {"PAL": 0x3E1B88, "NTSC": 0x3E0878}, connection_requirements = {"Whale from Bullring": [["Sky Flyer", "Water Net", "*Attack"], ["Sky Flyer", "*Hard"], ["*Air Crawl"]]}),
-    Monkey(name = "Mermonkey", level = "Simian Citadel", room = "Whale", address = {"PAL": 0x3E1B89, "NTSC": 0x3E0879}, connection_requirements = {"Whale from Bullring": [["Water Net", "Sky Flyer"], ["Water Net", "*Air Crawl"]]}),
+    Monkey(name = "Mermonkey", level = "Simian Citadel", room = "Whale", address = {"PAL": 0x3E1B89, "NTSC": 0x3E0879}, net_requirement = 1, connection_requirements = {"Whale from Bullring": [["Water Net", "Sky Flyer"], ["Water Net", "*Air Crawl"]]}),
     Monkey(name = "Colin", level = "Simian Citadel", room = "Whale", address = {"PAL": 0x3E1B8A, "NTSC": 0x3E087A}, connection_requirements = {"Whale from Bullring": [["Sky Flyer", "Water Net", "*Attack"], ["Sky Flyer", "*Hard"], ["*Air Crawl"]]}),
-    Monkey(name = "Nicky", level = "Simian Citadel", room = "Submarine", address = {"PAL": 0x3E1B37, "NTSC": 0x3E0827}, connection_requirements = {"Submarine from Whale": [[]], "Submarine from Fountain": [[]]}),
+    Monkey(name = "Nicky", level = "Simian Citadel", room = "Submarine", address = {"PAL": 0x3E1B37, "NTSC": 0x3E0827}, net_requirement = 1, connection_requirements = {"Submarine from Whale": [[]], "Submarine from Fountain": [[]]}),
     Monkey(name = "Vaughan", level = "Simian Citadel", room = "Submarine", address = {"PAL": 0x3E1B36, "NTSC": 0x3E0826}, connection_requirements = {"Submarine from Whale": [[]], "Submarine from Fountain": [[]]}),
     Monkey(name = "Dave", level = "Simian Citadel", room = "Fountain", address = {"PAL": 0x3E1B04, "NTSC": 0x3E07F4}, connection_requirements = {"Fountain from Entry": [[]], "Fountain from Submarine": [[]]}),
     Monkey(name = "Gonzales", level = "Simian Citadel", room = "Fountain", address = {"PAL": 0x3E1B06, "NTSC": 0x3E07F6}, connection_requirements = {"Fountain from Entry": [["*Attack"], ["*Hard"]], "Fountain from Submarine": [["*Attack"], ["*Hard"]]}),
@@ -233,10 +234,10 @@ monkeys = [
     Monkey(name = "White Monkey", level = "White Monkey Battle!", address = {"PAL": 0x3E1BAB, "NTSC": 0x3E089B}, connection_requirements = {"Entry from Spawn": [["*Attack"], ["Catapult", "*Hard"], ["R.C. Car", "*Hard"], ["Bananarang", "*Expert"]]}),
 
     #Pirate Isle
-    Monkey(name = "Pugwash", level = "Pirate Isle", address = {"PAL": 0x3E1B56, "NTSC": 0x3E0846}, connection_requirements = {"Entry from Spawn": [["Water Net"], ["*Hard"]], "Entry from Cave Entrance": [["Water Net"], ["*Hard"]], "Entry from Mine": [["Water Net"], ["*Hard"]]}),
+    Monkey(name = "Pugwash", level = "Pirate Isle", address = {"PAL": 0x3E1B56, "NTSC": 0x3E0846}, net_requirement = 2, connection_requirements = {"Entry from Spawn": [["Water Net"], ["*Hard"]], "Entry from Cave Entrance": [["Water Net"], ["*Hard"]], "Entry from Mine": [["Water Net"], ["*Hard"]]}),
     Monkey(name = "Burt", level = "Pirate Isle", address = {"PAL": 0x3E1B57, "NTSC": 0x3E0847}, connection_requirements = {"Entry from Spawn": [[]], "Entry from Cave Entrance": [[]], "Entry from Mine": [[]]}),
-    Monkey(name = "Hawkins", level = "Pirate Isle", address = {"PAL": 0x3E1B55, "NTSC": 0x3E0845}, connection_requirements = {"Entry from Spawn": [["Water Net"], ["*Hard"]], "Entry from Cave Entrance": [["Water Net"], ["*Hard"]], "Entry from Mine": [["Water Net"], ["*Hard"]]}),
-    Monkey(name = "Kelly", level = "Pirate Isle", address = {"PAL": 0x3E1B58, "NTSC": 0x3E0848}, connection_requirements = {"Entry from Spawn": [["Sky Flyer", "Water Net"], ["*Air Crawl", "Water Net"], ["*Air Crawl", "*Expert"], ["*Boost Jump", "*Expert", "Water Net"], ["Sky Flyer", "*Expert"]], "Entry from Mine": [["Sky Flyer", "Water Net"], ["*Air Crawl", "Water Net"], ["*Boost Jump", "*Expert", "Water Net"], ["*Air Crawl", "*Expert"], ["Sky Flyer", "*Expert"]], "Entry from Cave Entrance": [["Sky Flyer", "Water Net"], ["*Air Crawl", "Water Net"], ["*Boost Jump", "*Expert", "Water Net"], ["*Air Crawl", "*Expert"], ["Sky Flyer", "*Expert"]]}),
+    Monkey(name = "Hawkins", level = "Pirate Isle", address = {"PAL": 0x3E1B55, "NTSC": 0x3E0845}, net_requirement = 2, connection_requirements = {"Entry from Spawn": [["Water Net"], ["*Hard"]], "Entry from Cave Entrance": [["Water Net"], ["*Hard"]], "Entry from Mine": [["Water Net"], ["*Hard"]]}),
+    Monkey(name = "Kelly", level = "Pirate Isle", address = {"PAL": 0x3E1B58, "NTSC": 0x3E0848}, net_requirement = 2, connection_requirements = {"Entry from Spawn": [["Sky Flyer", "Water Net"], ["*Air Crawl", "Water Net"], ["*Air Crawl", "*Expert"], ["*Boost Jump", "*Expert", "Water Net"], ["Sky Flyer", "*Expert"]], "Entry from Mine": [["Sky Flyer", "Water Net"], ["*Air Crawl", "Water Net"], ["*Boost Jump", "*Expert", "Water Net"], ["*Air Crawl", "*Expert"], ["Sky Flyer", "*Expert"]], "Entry from Cave Entrance": [["Sky Flyer", "Water Net"], ["*Air Crawl", "Water Net"], ["*Boost Jump", "*Expert", "Water Net"], ["*Air Crawl", "*Expert"], ["Sky Flyer", "*Expert"]]}),
     Monkey(name = "Stephenson", level = "Pirate Isle", address = {"PAL": 0x3E1B59, "NTSC": 0x3E0849}, connection_requirements = {"Entry from Spawn": [[]], "Entry from Cave Entrance": [[]], "Entry from Mine": [[]]}),
     Monkey(name = "Mel", level = "Pirate Isle", room = "Cave Entrance", address = {"PAL": 0x3E1B74, "NTSC": 0x3E0864}, connection_requirements = {"Cave Entrance from Entry": [["Water Cannon"], ["*Hard", "*Damage Boost"]], "Cave Entrance from Boat": [["Water Cannon"], ["*Hard", "*Damage Boost"]]}),
     Monkey(name = "Dick", level = "Pirate Isle", room = "Cave Entrance", address = {"PAL": 0x3E1B54, "NTSC": 0x3E0844}, connection_requirements = {"Cave Entrance from Entry": [["Water Cannon"], ["*Air Crawl"], ["Stun Club", "*Expert"], ["Sky Flyer", "*Boost Fly", "*Hard"]], "Cave Entrance from Boat": [[]]}),
@@ -278,7 +279,7 @@ monkeys = [
     Monkey(name = "Patrick", level = "Land of the Apes", address = {"PAL": 0x3E1B6B, "NTSC": 0x3E085B}, connection_requirements = {"Entry from Spawn": [[]], "Entry from Icicles": [[]]}),
 
     #The Lost World
-    Monkey(name = "Homer", level = "The Lost World", address = {"PAL": 0x3E1B0C, "NTSC": 0x3E07FC}, connection_requirements = {"Entry from Spawn": [["Bananarang"]] ,"Entry from Trees": [["Bananarang", "Water Net"], ["Bananarang", "*Air Crawl"]]}),
+    Monkey(name = "Homer", level = "The Lost World", address = {"PAL": 0x3E1B0C, "NTSC": 0x3E07FC}, connection_requirements = {"Entry from Spawn": [["Bananarang"], ["*Air Crawl", "Sky Flyer", "*Expert"]] ,"Entry from Trees": [["Bananarang", "Water Net"], ["Bananarang", "*Air Crawl"], ["*Air Crawl", "Sky Flyer", "*Expert"]]}),
     Monkey(name = "Sam", level = "The Lost World", address = {"PAL": 0x3E1B0B, "NTSC": 0x3E07FB}, connection_requirements = {"Entry from Spawn": [[]] ,"Entry from Trees": [["Water Net"], ["*Air Crawl"]]}),
     Monkey(name = "Grant", level = "The Lost World", address = {"PAL": 0x3E1B0E, "NTSC": 0x3E07FE}, connection_requirements = {"Entry from Spawn": [["Sky Flyer", "Water Net"], ["*Air Crawl"], ["*Expert"]] ,"Entry from Trees": [["Sky Flyer", "Water Net"], ["*Air Crawl"], ["Water Net", "*Expert"]]}),
     Monkey(name = "Mervin", level = "The Lost World", address = {"PAL": 0x3E1B0D, "NTSC": 0x3E07FD}, connection_requirements = {"Entry from Spawn": [[]] ,"Entry from Trees": [["Water Net"], ["*Air Crawl"]]}),
@@ -303,8 +304,8 @@ monkeys = [
     #Skyscraper City 
     Monkey(name = "Brendan", level = "Skyscraper City", room = "Final Room", address = {"PAL": 0x3E1B91, "NTSC": 0x3E0881}, connection_requirements = {"Final Room from Tank": [[]]}),
     Monkey(name = "Ali", level = "Skyscraper City", room = "Final Room", address = {"PAL": 0x3E1B90, "NTSC": 0x3E0880}, connection_requirements = {"Final Room from Tank": [["Catapult"], ["Sky Flyer", "*Hard"]]}),
-    Monkey(name = "Jim  ", level = "Skyscraper City", room = "Final Room", address = {"PAL": 0x3E1B2C, "NTSC": 0x3E081C}, connection_requirements = {"Final Room from Tank": [["*Punch", "Electro Magnet", "Catapult", "R.C. Car"], ["*Punch", "Electro Magnet", "Catapult", "Sky Flyer", "*Expert", "*Boost Fly"], ["*Punch", "*Air Crawl"]]}), #Why are there three Jims in this game
-    Monkey(name = "Ricardo", level = "Skyscraper City", room = "Final Room", address = {"PAL": 0x3E1B92, "NTSC": 0x3E0882}, connection_requirements = {"Final Room from Tank": [["Electro Magnet", "Catapult", "R.C. Car"], ["Electro Magnet", "Catapult", "Sky Flyer", "*Expert", "*Boost Fly"], ["*Air Crawl"]]}),
+    Monkey(name = "Jim  ", level = "Skyscraper City", room = "Final Room", address = {"PAL": 0x3E1B2C, "NTSC": 0x3E081C}, connection_requirements = {"Final Room from Tank": [["*Punch", "Electro Magnet", "Catapult", "R.C. Car"], ["*Punch", "Electro Magnet", "Catapult", "Sky Flyer", "*Hard", "*Boost Fly"], ["*Punch", "*Boost Fly", "*Expert"], ["*Punch", "*Air Crawl"]]}), #Why are there three Jims in this game
+    Monkey(name = "Ricardo", level = "Skyscraper City", room = "Final Room", address = {"PAL": 0x3E1B92, "NTSC": 0x3E0882}, connection_requirements = {"Final Room from Tank": [["Electro Magnet", "Catapult", "R.C. Car"], ["Electro Magnet", "Catapult", "Sky Flyer", "*Hard", "*Boost Fly"], ["*Air Crawl"], ["*Boost Fly", "*Expert"]]}),
     Monkey(name = "Douglas", level = "Skyscraper City", room = "Final Room", address = {"PAL": 0x3E1B8F, "NTSC": 0x3E087F}, connection_requirements = {"Final Room from Tank": [["Sky Flyer"], ["*Hard"]]}),
     Monkey(name = "Cameron", level = "Skyscraper City", room = "Final Room", address = {"PAL": 0x3E1B8E, "NTSC": 0x3E087E}, connection_requirements = {"Final Room from Tank": [[]]}),    
     Monkey(name = "Slider", level = "Skyscraper City", address = {"PAL": 0x3E1B22, "NTSC": 0x3E0812}, connection_requirements = {"Entry from Spawn": [["Electro Magnet"], ["*Air Crawl"], ["Sky Flyer", "*Hard"]], "Entry from Lobby": [[]]}),
@@ -320,12 +321,12 @@ monkeys = [
     Monkey(name = "Slacker", level = "Skyscraper City", room = "Sewer", address = {"PAL": 0x3E1B2A, "NTSC": 0x3E081A}, connection_requirements = {"Sewer from Lobby": [["Electro Magnet"]], "Sewer from Lobby Corridor": [["Electro Magnet", "R.C. Car"], ["*Air Crawl", "*Expert"]]}),
     Monkey(name = "Kengo", level = "Skyscraper City", room = "Sewer", address = {"PAL": 0x3E1B2B, "NTSC": 0x3E081B}, connection_requirements = {"Sewer from Lobby": [["Electro Magnet", "R.C. Car"]], "Sewer from Lobby Corridor": [["R.C. Car", "Electro Magnet"], ["*Air Crawl", "*Expert"]]}),
     Monkey(name = "Rory", level = "Skyscraper City", room = "Sewer", address = {"PAL": 0x3E1B23, "NTSC": 0x3E0813}, connection_requirements = {"Sewer from Lobby": [["Electro Magnet", "R.C. Car", "*Punch"]], "Sewer from Lobby Corridor": [["R.C. Car", "Electro Magnet", "*Punch"], ["*Air Crawl", "*Punch", "*Expert"]]}),
-    Monkey(name = "Eubank", level = "Skyscraper City", room = "Sewer", address = {"PAL": 0x3E1B2D, "NTSC": 0x3E081D}, connection_requirements = {"Sewer from Lobby": [["Electro Magnet", "R.C. Car", "Bananarang", "Water Net"]], "Sewer from Lobby Corridor": [["R.C. Car", "Electro Magnet", "Bananarang", "Water Net"], ["*Air Crawl", "Bananarang", "*Expert"]]}),
+    Monkey(name = "Eubank", level = "Skyscraper City", room = "Sewer", address = {"PAL": 0x3E1B2D, "NTSC": 0x3E081D}, net_requirement = 1, connection_requirements = {"Sewer from Lobby": [["Electro Magnet", "R.C. Car", "Bananarang", "Water Net"]], "Sewer from Lobby Corridor": [["R.C. Car", "Electro Magnet", "Bananarang", "Water Net"], ["*Air Crawl", "Sky Flyer", "*Expert", "Monkey Net"]]}),
     Monkey(name = "Miller", level = "Skyscraper City", room = "Sewer", address = {"PAL": 0x3E1B2E, "NTSC": 0x3E081E}, connection_requirements = {"Sewer from Lobby": [["Electro Magnet", "R.C. Car", "Sky Flyer", "Water Net"], ["Electro Magnet", "R.C. Car", "Sky Flyer", "*Hard"], ["Electro Magnet", "R.C. Car", "*Hard", "Water Net"], ["Electro Magnet", "R.C. Car", "*Air Crawl", "*Hard"], ["Electro Magnet", "R.C. Car", "Dash Hoop", "*Long Jump", "*Expert"]], "Sewer from Lobby Corridor": [["Water Net", "Sky Flyer"], ["Water Net", "*Hard"], ["Sky Flyer", "*Hard"], ["*Air Crawl", "*Hard"], ["Dash Hoop", "*Expert", "*Long Jump"]]}),
     Monkey(name = "Spacey", level = "Skyscraper City", room = "Tank", address = {"PAL": 0x3E1B8C, "NTSC": 0x3E087C}, connection_requirements = {"Tank from Lobby Corridor": [["*UFO", "Dash Hoop"], ["*UFO", "Sky Flyer", "*Hard"], ["*UFO", "*Air Crawl", "*Hard"]], "Tank from Final Room": [["*UFO", "Dash Hoop"], ["*UFO", "Sky Flyer", "*Hard"], ["*UFO", "*Air Crawl", "*Hard"]]}),
     Monkey(name = "Ivor", level = "Skyscraper City", room = "Tank", address = {"PAL": 0x3E1B8D, "NTSC": 0x3E087D}, connection_requirements = {"Tank from Lobby Corridor": [[]], "Tank from Final Room": [[]]}),
 
-    #Code C.H.I.M.P. - continue logic from here
+    #Code C.H.I.M.P.
     Monkey(name = "Kiki", level = "Code C.H.I.M.P.", address = {"PAL": 0x3E1B3F, "NTSC": 0x3E082F}, connection_requirements = {"Entry from Spawn": [["*UFO"]], "Entry from Base Entrance": [["*UFO", "*Air Crawl"]], "Entry from Moving Platforms": [["*UFO"]]}),
     Monkey(name = "Cole ", level = "Code C.H.I.M.P.", address = {"PAL": 0x3E1B3D, "NTSC": 0x3E082D}, connection_requirements = {"Entry from Spawn": [[]], "Entry from Base Entrance": [["*Air Crawl"]], "Entry from Moving Platforms": [[]]}),
     Monkey(name = "Mimi", level = "Code C.H.I.M.P.", address = {"PAL": 0x3E1B3E, "NTSC": 0x3E082E}, connection_requirements = {"Entry from Spawn": [["*UFO"]], "Entry from Base Entrance": [["*UFO", "*Air Crawl"]], "Entry from Moving Platforms": [["*UFO"]]}),
@@ -381,7 +382,18 @@ monkeys = [
 ]
 
 for i in range(0, len(monkeys)):
+    net_requirement = monkeys[i].net_requirement
+    if net_requirement != 1:
+        for connection_name in monkeys[i].connection_requirements:
+            altered_requirements = []
+            for requirement in monkeys[i].connection_requirements[connection_name]:
+                if net_requirement == 0 or net_requirement == 2:
+                    altered_requirements.append(requirement + ["Monkey Net"])
+                if net_requirement == 2:
+                    altered_requirements.append(requirement + ["Water Net"])
+            monkeys[i].connection_requirements[connection_name] = altered_requirements
     monkeys[i].id = i + 1
+
             
 monkey_from_name: dict[str, Monkey] = {monkey.name: monkey for monkey in monkeys}
 monkey_from_id: dict[int, Monkey] = {monkey.id: monkey for monkey in monkeys}

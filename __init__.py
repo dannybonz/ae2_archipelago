@@ -3,7 +3,7 @@ from BaseClasses import Item, ItemClassification
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, components, launch_subprocess, Type
 from .Items import AE2Item, item_id_from_name, gadget_aliases
-from .Locations import location_id_from_name
+from .Locations import location_id_from_name, location_groups
 from .Options import AE2Options, option_groups
 from .Regions import create_regions
 from Options import OptionError
@@ -86,6 +86,8 @@ class AE2World(World):
         "Punch": {"Power Punch"}
     }
 
+    location_name_groups = location_groups
+
     #Universal Tracker
     ut_can_gen_without_yaml = True
     glitches_item_name = "Glitched Item"
@@ -136,6 +138,7 @@ class AE2World(World):
         self.multiworld.itempool += item_pool
 
     def generate_early(self) -> None: 
+        self.starting_items = []
         if hasattr(self.multiworld, "re_gen_passthrough"): #If generated through Universal Tracker passthrough
             slot_data: dict = self.multiworld.re_gen_passthrough[self.game]
             self.world_key_requirements = slot_data["world_key_requirements"]
@@ -146,7 +149,34 @@ class AE2World(World):
             self.options.long_jump_logic.value = slot_data["long_jump_logic"]
             self.options.damage_boost_logic.value = slot_data["damage_boost_logic"]
             self.options.hidden_monkey_logic.value = slot_data["hidden_monkey_logic"]
+            self.options.message_phone_locations.value = True
         else:
+            if self.options.playable_character.value == 0:
+                self.starting_items.append("Pipotchi")
+            if self.options.shuffle_water_net.value == False:
+                self.starting_items.append("Water Net")
+            if self.options.shuffle_air_crawl.value == False:
+                self.starting_items.append("Air Crawl")
+
+            for entry in self.options.starting_gadgets.value:
+                entry = entry.lower()
+                the_gadget = None
+
+                if entry == "random":
+                    possible_gadgets = [gadget for gadget in ["Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"] if not gadget in self.starting_items]
+                    if len(possible_gadgets) > 0:
+                        the_gadget = self.random.choice(possible_gadgets)
+                elif entry in ["monkey net", "stun club", "monkey radar", "dash hoop", "catapult", "sky flyer", "r.c. car", "bananarang", "water cannon", "electro magnet", "power punch"]:
+                    the_gadget = next((gadget for gadget in ["Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"] if gadget.lower() == entry.lower()), None)
+                else:
+                    the_gadget = next((gadget for alias, gadget in gadget_aliases.items() if alias.lower() == entry), None)
+
+                if the_gadget != None and not the_gadget in self.starting_items:
+                    self.starting_items.append(the_gadget)
+
+            if self.options.message_phone_locations.value == False and not "Monkey Net" in self.starting_items:
+                self.starting_items.append("Monkey Net")
+
             if self.options.level_shuffle.value:
                 level_order = []
 
@@ -171,6 +201,15 @@ class AE2World(World):
                     self.random.shuffle(to_be_added)
                     level_order += to_be_added
 
+                if not "Monkey Net" in self.starting_items: #Ensure there is at least one level in sphere 1 with an available phone                
+                    levels_with_free_phones = ["Liberty Island", "Breezy Village", "Viva Apespania", "Castle Frightmare", "Vita-Z Factory", "Casino City", "Ninja Hideout", "Snowball Mountain", "The Blue Baboon", "The Lost World"]
+                    if "Water Net" in self.starting_items:
+                        levels_with_free_phones.append("Port Calm")
+                    free_phone_level = self.random.choice(levels_with_free_phones)
+                    early_level_index, free_phone_level_index = self.random.randint(0, 2), level_order.index(free_phone_level)
+                    level_order[free_phone_level_index], level_order[early_level_index] = level_order[early_level_index], level_order[free_phone_level_index]
+                    print(free_phone_level)
+
                 level_order += [level.name for level in levels if level.keep_at_end]
             else: #Level shuffle disabled
                 level_order = [level.name for level in levels]
@@ -192,30 +231,6 @@ class AE2World(World):
                         current_key_requirement += 1
                 self.world_key_requirements[level_name] = current_key_requirement
                 was_boss = levels[level_order.index(level_name)].is_boss
-
-        self.starting_items = ["Monkey Net"]
-        if self.options.playable_character.value == 0:
-            self.starting_items.append("Pipotchi")
-        if self.options.shuffle_water_net.value == False:
-            self.starting_items.append("Water Net")
-        if self.options.shuffle_air_crawl.value == False:
-            self.starting_items.append("Air Crawl")
-
-        for entry in self.options.starting_gadgets.value:
-            entry = entry.lower()
-            the_gadget = None
-
-            if entry == "random":
-                possible_gadgets = [gadget for gadget in ["Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"] if not gadget in self.starting_items]
-                if len(possible_gadgets) > 0:
-                    the_gadget = self.random.choice(possible_gadgets)
-            elif entry in ["monkey net", "stun club", "monkey radar", "dash hoop", "catapult", "sky flyer", "r.c. car", "bananarang", "water cannon", "electro magnet", "power punch"]:
-                the_gadget = next((gadget for gadget in ["Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"] if gadget.lower() == entry.lower()), None)
-            else:
-                the_gadget = next((gadget for alias, gadget in gadget_aliases.items() if alias.lower() == entry), None)
-
-            if the_gadget != None and not the_gadget in self.starting_items:
-                self.starting_items.append(the_gadget)
 
         self.preplaced_progression = ["Victory"] + self.starting_items
         self.progression_item_names = self.pick_progression_items()
