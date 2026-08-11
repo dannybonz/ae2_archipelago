@@ -19,6 +19,7 @@ item_id_from_name: dict[str, int] = {
 	"Power Punch": 12,
 	"Pipotchi": 13,
 	"See-All Scope": 14,
+	"Progressive Catapult": 15,
 
 	#Progression
 	"World Key": 101,

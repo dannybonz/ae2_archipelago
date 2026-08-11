@@ -1,4 +1,5 @@
-GEN_VERSION = "1.0" #Used to match with client
+gen_ver = "1.2"
+
 from BaseClasses import Item, ItemClassification
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, components, launch_subprocess, Type
@@ -9,7 +10,7 @@ from .Regions import create_regions
 from Options import OptionError
 import copy, math
 from .Monkeys import monkeys
-from .Levels import levels
+from .Levels import levels, level_from_name, build_randomised_maps, music_table, randomised_music_pool
 
 #Identifier for Archipelago to recognize and run the client
 def run_client() -> None:
@@ -66,10 +67,10 @@ class AE2World(World):
         "Hoop": {"Dash Hoop"},
 
         #Catapult
-        "Slingshot": {"Catapult"},
-        "Slingback Shooter": {"Catapult"},
-        "Sling": {"Catapult"},
-        "Slingback": {"Catapult"},
+        "Slingshot": {"Catapult", "Progressive Catapult"},
+        "Slingback Shooter": {"Catapult", "Progressive Catapult"},
+        "Sling": {"Catapult", "Progressive Catapult"},
+        "Slingback": {"Catapult", "Progressive Catapult"},
 
         #Sky Flyer
         "Flyer": {"Sky Flyer"},
@@ -94,13 +95,22 @@ class AE2World(World):
 
     explicit_indirect_conditions = False
 
+    def get_catapult_item_name(self) -> str:
+        if self.options.air_crawl_behaviour.value == 3:
+            return "Progressive Catapult"
+        else:
+            return "Catapult"
+
     def pick_progression_items(self) -> list[str]:
-        progression_items = [gadget for gadget in ["Monkey Net", "Stun Club", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch", "Monkey Radar", "See-All Scope"] if not gadget in self.starting_items]
-        progression_items += ["World Key"] * max(self.world_key_requirements.values())
-        if self.options.shuffle_air_crawl.value:
+        progression_items = [gadget for gadget in ["Monkey Net", "Stun Club", "Dash Hoop", self.get_catapult_item_name(), "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch", "Monkey Radar", "See-All Scope"] if not gadget in self.starting_items]
+        progression_items += ["World Key"] * (max(self.world_key_requirements.values()) + self.options.extra_world_keys.value)
+        if self.options.air_crawl_behaviour.value == 2:
             progression_items.append("Air Crawl")
+        elif self.options.air_crawl_behaviour.value == 3:
+            progression_items.append("Progressive Catapult")
         if self.options.shuffle_water_net.value:
-            progression_items.append("Water Net")
+            progression_items.append("Water Net")        
+
         return sorted(progression_items)
 
     def pick_useful_items(self) -> list[str]:
@@ -149,13 +159,17 @@ class AE2World(World):
             self.options.long_jump_logic.value = slot_data["long_jump_logic"]
             self.options.damage_boost_logic.value = slot_data["damage_boost_logic"]
             self.options.hidden_monkey_logic.value = slot_data["hidden_monkey_logic"]
+            self.randomised_starting_rooms = slot_data["randomised_starting_rooms"]
             self.options.message_phone_locations.value = True
+            self.randomised_gates = {}
         else:
-            if self.options.playable_character.value == 0:
+            if self.options.playable_character.value == 0: #playing as Hikaru
                 self.starting_items.append("Pipotchi")
+            else: #playing as Kakeru
+                self.options.message_phone_locations.value = False
             if self.options.shuffle_water_net.value == False:
                 self.starting_items.append("Water Net")
-            if self.options.shuffle_air_crawl.value == False:
+            if self.options.air_crawl_behaviour.value == 0:
                 self.starting_items.append("Air Crawl")
 
             for entry in self.options.starting_gadgets.value:
@@ -163,13 +177,15 @@ class AE2World(World):
                 the_gadget = None
 
                 if entry == "random":
-                    possible_gadgets = [gadget for gadget in ["Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"] if not gadget in self.starting_items]
+                    possible_gadgets = [gadget for gadget in ["Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", self.get_catapult_item_name(), "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"] if not gadget in self.starting_items]
                     if len(possible_gadgets) > 0:
                         the_gadget = self.random.choice(possible_gadgets)
                 elif entry in ["monkey net", "stun club", "monkey radar", "dash hoop", "catapult", "sky flyer", "r.c. car", "bananarang", "water cannon", "electro magnet", "power punch"]:
                     the_gadget = next((gadget for gadget in ["Monkey Net", "Stun Club", "Monkey Radar", "Dash Hoop", "Catapult", "Sky Flyer", "R.C. Car", "Bananarang", "Water Cannon", "Electro Magnet", "Power Punch"] if gadget.lower() == entry.lower()), None)
                 else:
                     the_gadget = next((gadget for alias, gadget in gadget_aliases.items() if alias.lower() == entry), None)
+                if the_gadget == "Catapult" and the_gadget != self.get_catapult_item_name():
+                    the_gadget = self.get_catapult_item_name()
 
                 if the_gadget != None and not the_gadget in self.starting_items:
                     self.starting_items.append(the_gadget)
@@ -201,14 +217,13 @@ class AE2World(World):
                     self.random.shuffle(to_be_added)
                     level_order += to_be_added
 
-                if not "Monkey Net" in self.starting_items: #Ensure there is at least one level in sphere 1 with an available phone                
+                if not "Monkey Net" in self.starting_items: #Ensure there is at least one level in sphere 1 with an available phone
                     levels_with_free_phones = ["Liberty Island", "Breezy Village", "Viva Apespania", "Castle Frightmare", "Vita-Z Factory", "Casino City", "Ninja Hideout", "Snowball Mountain", "The Blue Baboon", "The Lost World"]
                     if "Water Net" in self.starting_items:
                         levels_with_free_phones.append("Port Calm")
                     free_phone_level = self.random.choice(levels_with_free_phones)
                     early_level_index, free_phone_level_index = self.random.randint(0, 2), level_order.index(free_phone_level)
                     level_order[free_phone_level_index], level_order[early_level_index] = level_order[early_level_index], level_order[free_phone_level_index]
-                    print(free_phone_level)
 
                 level_order += [level.name for level in levels if level.keep_at_end]
             else: #Level shuffle disabled
@@ -232,12 +247,42 @@ class AE2World(World):
                 self.world_key_requirements[level_name] = current_key_requirement
                 was_boss = levels[level_order.index(level_name)].is_boss
 
+            self.randomised_starting_rooms = {}
+            if self.options.randomise_starting_room.value:
+                for level in levels:
+                    self.randomised_starting_rooms[level.name] = level.room_entrances.index(self.random.choice([entrance for entrance in level.room_entrances if entrance.can_start]))
+
+            self.randomised_gates = {}
+            if False:#self.options.randomise_area_transitions.value:
+                shuffles = 1
+                print("Ape Escape 2: Shuffling transitions...")
+                while True:
+                    try:
+                        self.randomised_gates = build_randomised_maps(self)
+                        print(f"Ape Escape 2: Transitions shuffled {shuffles} times.")
+                        break
+                    except Exception as e:
+                        shuffles += 1
+                        if shuffles > 5000:
+                            print("Ape Escape 2: Exceeded 5000 shuffles and unable to generate valid transitions.")
+                            break
+                
+            self.music_map = {}
+            if self.options.music_randomisation.value:
+                song_replacements = {}
+                for music_entry in music_table:
+                    if self.options.music_randomisation.value == 1 and music_table[music_entry]["value"] in song_replacements:
+                        self.music_map[music_entry] = song_replacements[music_table[music_entry]["value"]]
+                    else:
+                        self.music_map[music_entry] = self.random.choice(randomised_music_pool)
+                        song_replacements[music_table[music_entry]["value"]] = self.music_map[music_entry]
+
         self.preplaced_progression = ["Victory"] + self.starting_items
         self.progression_item_names = self.pick_progression_items()
         self.useful_item_names = self.pick_useful_items()
 
     def fill_slot_data(self) -> dict[str, object]:
-        return {"world_key_requirements": self.world_key_requirements, "deathlink_enabled": self.options.death_link.value, "logic_difficulty": self.options.logic_difficulty.value, "damage_boost_logic": self.options.damage_boost_logic.value, "air_crawl_logic": self.options.air_crawl_logic.value, "boost_jump_logic": self.options.boost_jump_logic.value, "boost_fly_logic": self.options.boost_fly_logic.value, "long_jump_logic": self.options.long_jump_logic.value, "character": self.options.playable_character.value, "hidden_monkey_logic": self.options.hidden_monkey_logic.value}
+        return {"world_key_requirements": self.world_key_requirements, "deathlink_enabled": self.options.death_link.value, "logic_difficulty": self.options.logic_difficulty.value, "damage_boost_logic": self.options.damage_boost_logic.value, "air_crawl_logic": self.options.air_crawl_logic.value, "boost_jump_logic": self.options.boost_jump_logic.value, "boost_fly_logic": self.options.boost_fly_logic.value, "long_jump_logic": self.options.long_jump_logic.value, "character": self.options.playable_character.value, "hidden_monkey_logic": self.options.hidden_monkey_logic.value, "randomised_starting_rooms": self.randomised_starting_rooms, "randomised_gates": self.randomised_gates, "music_map": self.music_map, "gen_ver": gen_ver}
 
     def get_filler_item_name(self) -> str:
         random = self.random.random()
@@ -271,6 +316,14 @@ class AE2World(World):
         
         spoiler_string += "\nWorld Key Requirements:"
         for level in self.world_key_requirements:
-            spoiler_string += f"\n{level}: {self.world_key_requirements[level]}"
-        
+            if level in self.randomised_starting_rooms and self.randomised_starting_rooms[level] != 0:
+                spoiler_string += f"\n{level} ({level_from_name[level].room_entrances[self.randomised_starting_rooms[level]].name.split(" from ")[0]}): {self.world_key_requirements[level]}"
+            else:
+                spoiler_string += f"\n{level}: {self.world_key_requirements[level]}"
+
+        if self.randomised_gates != {}:
+            spoiler_string += "\n\nRandomised Transitions:"
+            for gate in self.randomised_gates:
+                spoiler_string += f"\n{gate} = {self.randomised_gates[gate]}"
+
         spoiler_handle.write(spoiler_string)       

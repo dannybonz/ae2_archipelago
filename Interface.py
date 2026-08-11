@@ -1,6 +1,6 @@
 import socket, struct, platform, os
 from .Monkeys import monkeys, monkey_from_name, monkey_from_id
-from .Levels import level_from_name, levels
+from .Levels import level_from_name, levels, music_table
 from .Phones import phone_from_name
 
 gadget_addresses = {
@@ -58,7 +58,6 @@ misc_addresses = {
     "visited": {"PAL": 0x3E198C, "NTSC": 0x3E067C}, #Number of levels visited (updates your unlocked gadgets) - just keep it at 255
     "cleared": {"PAL": 0x3E1988, "NTSC": 0x3E0678}, #How many levels are cleared,
     "hikaru_state": {"PAL": 0x4D5784, "NTSC": 0x4D4584}, #7 = crouched, 8 = crawling, 9 = hidden, 17 = submerged, 18 = floating, 49 = celebrating
-    "y_position": {"PAL": 0x4D5CC7, "NTSC": 0x4D4AC7}, #Y position
     "air_meter_showing": {"PAL": 0x53D058, "NTSC": 0x53C0D4}, #1 = air meter visible (so check for water net unlock)
     "in_first_person": {"PAL": 0x4D1AF4, "NTSC": 0x4D08F4}, #0 = normal, 1 = first person, other numbers are different camera angles
     "camera_state": {"PAL": 0x4CCD40, "NTSC": 0x4CBB40}, #0 = frozen, 2 = active
@@ -68,7 +67,19 @@ misc_addresses = {
     "y_velocity": {"PAL": 0x4D5D14, "NTSC": 0x4D4BC7},
     "jump_state": {"PAL": 0x4D5D9C, "NTSC": 0x4D4B9C},
     "message_info_pointer": {"PAL": 0x3DE2CC, "NTSC": 0x3DCF6C},
-    "gadget_position": {"PAL": 0x4D5F63, "NTSC": 0x4D4D63}
+
+    "gadget_visible": {"PAL": 0x4D5797, "NTSC": 0x4D4597}, #0 = invisible, 1 = visible
+    "transition_function": {"PAL": 0x383104, "NTSC": 0x381BE4}, #AC620004 = transition updates enabled, 00000000 = disabled 
+    "reload_room": {"PAL": 0x3B35D4, "NTSC": 0x3B20D4}, #4 = reload room
+    "gate_pointer": {"PAL": 0x1E60B8C, "NTSC": 0x1E60B8C},
+    "room_to_be_loaded": {"PAL": 0x3B3620, "NTSC": 0x3B2120},
+    "game_paused": {"PAL": 0x3B3604, "NTSC": 0x3B2104}, #0 = unpaused, 3 = paused
+
+    "x_position": {"PAL": 0x4D5CC0, "NTSC": 0x4D4AC0}, #X position
+    "y_position": {"PAL": 0x4D5CC4, "NTSC": 0x4D4AC4}, #Y position
+    "z_position": {"PAL": 0x4D5CC8, "NTSC": 0x4D4AC8}, #Z position
+
+    "hikaru_visible": {"PAL": 0x4D5796, "NTSC": 0x4D4596} #0 = invisible, 1 = visible
 }
 
 kakeru_addresses = [  # Set these all to 1 if playing as Kakeru
@@ -121,11 +132,13 @@ kakeru_addresses = [  # Set these all to 1 if playing as Kakeru
     {"PAL": 0x3E1ECD, "NTSC": 0x3E0BBD},
 ]
 
-#Room transitions addresses (NTSC)
-#3B2120 - room transition?
-#19BB68 - something transition related
-#3B02A1 - music table
-#3B20D4 - set this to 5 and it reloads the room
+## Room Transition Randomisation Flow ##
+#Load you into Apespania Village (0xF) after every level select
+#This room has known addresses for gate pointer that are easily editable
+#Teleport the player to outside Bullring
+#Freeze transition pointer
+#Load you into the actual desired level
+#Manually update gate details based on player position
 
 class AE2Interface:
 
@@ -138,8 +151,11 @@ class AE2Interface:
 
     def reset(self) -> None:
         self.world_key_requirements = {}
+        self.randomised_starting_rooms = {}
+        self.randomised_gates = {}
         self.current_level_name = None
         self.caught_monkeys_in_current_level = 0
+        self.music_map = {}
 
         self.caught_monkeys = set()
         self.unlocked_gadgets = set()
@@ -167,6 +183,13 @@ class AE2Interface:
 
         self.used_message_info_pointers = []
         self.read_phones = set()
+
+        self.transition_state = "default"
+        self.target_room_to_load = 0x71
+
+        self.natsumi_introduced = False
+        self.applied_custom_music_map = False
+        self.empty_hands = True
 
     def connect_to_pcsx2(self) -> bool:
         try:
@@ -285,7 +308,12 @@ class AE2Interface:
         if selected_level < self.unlocked_levels and selected_level > -1:
             if self.current_level_name != level_from_name[list(self.world_key_requirements.keys())[selected_level]].name:
                 self.current_level_name = level_from_name[list(self.world_key_requirements.keys())[selected_level]].name #Update current level name
-            self.write_u8(misc_addresses["level_to_be_loaded"][self.game_region], level_from_name[self.current_level_name].room_entrances[0].value) #Change area to be loaded when select confirms
+            if self.current_level_name in self.randomised_starting_rooms:
+                room_index = self.randomised_starting_rooms[self.current_level_name]
+            else:
+                room_index = 0
+            self.target_room_to_load = level_from_name[self.current_level_name].room_entrances[room_index].target_room
+            self.write_u8(misc_addresses["level_to_be_loaded"][self.game_region], self.target_room_to_load) #Change area to be loaded when select confirms
             self.previous_level_select_location = selected_level #Remember level selector position
 
     def update_monkey_count(self) -> None:
@@ -362,20 +390,55 @@ class AE2Interface:
                     self.write_u8(equipped_gadget_addresses[face_button_to_use][self.game_region], newly_received_gadget_id)
                     currently_equipped[face_button_to_use] = newly_received_gadget_id
 
-        if currently_equipped[selected_face_button] == 0: #Nothing
-            self.write_u8(misc_addresses["gadget_position"][self.game_region], 255) #Fly your gadget far away
+        if selected_face_button == None or currently_equipped[selected_face_button] == 0: #Nothing
+            self.write_u8(misc_addresses["gadget_visible"][self.game_region], 0) #Hide your gadget
             self.write_u8(misc_addresses["selected_face_button"][self.game_region], 4)
+            self.empty_hands = True
+        elif self.empty_hands:
+            self.write_u8(misc_addresses["gadget_visible"][self.game_region], 1) #Show your gadget
+            self.empty_hands = False
 
     def trigger_falloff(self) -> None:
         self.write_u8(misc_addresses["camera_state"][self.game_region], 0) #Freeze camera in place
-        self.write_u8(misc_addresses["y_position"][self.game_region], 255) #Teleport you below the death barrier
+        self.write_u32(misc_addresses["y_position"][self.game_region], 0xFFFFFFFF) #Teleport you below the death barrier
+
+    def set_transitions_enabled(self, enabled) -> None:
+        if enabled:
+            self.write_u32(misc_addresses["transition_function"][self.game_region], 0xAC620004)
+        else:
+            self.write_u32(misc_addresses["transition_function"][self.game_region], 0x00000000)
+
+    def teleport_player_to_position(self,  x, y, z) -> None:
+        self.write_u32(misc_addresses["x_position"][self.game_region], x) 
+        self.write_u32(misc_addresses["y_position"][self.game_region], y)
+        self.write_u32(misc_addresses["z_position"][self.game_region], z)
+
+    def get_closest_transition(self) -> str:
+        level = level_from_name[self.current_level_name]
+        available_transitions = [room_entrance for room_entrance in level.room_entrances if room_entrance.source_room == self.target_room_to_load]
+        if len(available_transitions) == 1:
+            return available_transitions[0].name
+        elif len(available_transitions) > 1:
+            x_pos, y_pos, z_pos = self.read_u32(misc_addresses["x_position"][self.game_region]), self.read_u32(misc_addresses["y_position"][self.game_region]), self.read_u32(misc_addresses["z_position"][self.game_region])
+            #Loop through available transitions and check coordinate positions to find closest entry
+        else:
+            return None
+
+    def apply_custom_music_map(self) -> None:
+        for room in self.music_map:
+            self.write_u8(music_table[int(room)]["address"][self.game_region], self.music_map[room])
+        self.applied_custom_music_map = True
 
     def enforce_game_state(self) -> None:
         current_screen = self.read_u8(misc_addresses["screen"][self.game_region])
 
         if self.read_u8(misc_addresses["natsumi_introduced"][self.game_region]) == 0: #Starting a new game (haven't heard Natsumi's introduction), so force you to the Travel Station instead of Liberty Island
+            self.natsumi_introduced = False
             self.write_u8(misc_addresses["level_to_be_loaded"][self.game_region], 0x71) #Force to Travel Station
         elif current_screen == 1: #In the Travel Station
+            #Update Natsumi introduction state tracking
+            self.natsumi_introduced = True
+
             #Update level select
             if (self.all_monkeys_caught):
                 self.write_u8(misc_addresses["cleared"][self.game_region], 28) #Sets 28 levels to cleared - unlocks final Specter
@@ -399,13 +462,24 @@ class AE2Interface:
             self.write_u8(misc_addresses["levels"][self.game_region], self.unlocked_levels + 1) #Update number of unlocked levels
 
             if self.read_u8(misc_addresses["in_first_person"][self.game_region]) == 0x0A: #Viewing the level selector
-                self.update_level_select() #Update level select 
+                self.update_level_select() #Update level select
             elif self.previous_level_select_location != -1:
                 self.write_u8(misc_addresses["selected"][self.game_region], self.previous_level_select_location)
+
+            if not self.applied_custom_music_map:
+                self.apply_custom_music_map()
+
+            if self.randomised_gates != {}: #Re-enable level transitions in preparation for next stage
+                self.set_transitions_enabled(True)
+                self.transition_state = "default"
 
             self.auto_equip()
 
         elif current_screen != 31: #In a level
+
+            #Update level name
+            if self.transition_state != "going_to_apespania" and current_screen - 2 < len(levels):
+                self.current_level_name = levels[current_screen - 2].name
             self.write_u8(misc_addresses["cleared"][self.game_region], 255) #Sets 255 levels to cleared - stops you getting taken to boss fights
 
             #Check message phones
@@ -414,6 +488,7 @@ class AE2Interface:
                 message_name_pointer = self.read_u32(message_info_pointer + 0x8)
                 self.used_message_info_pointers.append(message_info_pointer)
                 phone_name = self.read_u64(message_name_pointer).to_bytes(8, "little").decode("ascii").rstrip("\x00")
+                print(f"Phone Detected: {phone_name}")
                 if phone_name.strip() in phone_from_name:
                     self.read_phones.add(phone_from_name[phone_name].id)
 
@@ -440,6 +515,16 @@ class AE2Interface:
             if self.read_u8(kakeru_addresses[0][self.game_region]) == 0:
                 for address in kakeru_addresses:
                     self.write_u8(address[self.game_region], 1)
+
+        if current_screen == 33: #"Catch Monkeys!" screen
+            if self.randomised_gates != {} and self.transition_state == "default" and self.current_level_name != None and len(level_from_name[self.current_level_name].room_entrances) > 1:
+                self.write_u8(misc_addresses["level_to_be_loaded"][self.game_region], 0xF) #Load you into the Apespania Village instead
+                if str(int(self.target_room_to_load)) in self.music_map:
+                    music_value = self.music_map[str(int(self.target_room_to_load))]
+                else:
+                    music_value = music_table[self.target_room_to_load]["value"]
+                self.write_u8(music_table[0xF]["address"][self.game_region], music_value) #Replace Apespania music with desired level's music
+                self.transition_state = "going_to_apespania"
 
         if (current_screen >= 1 and current_screen < 30): #In gameplay/credits
             #Check lives for deathlink
@@ -476,6 +561,34 @@ class AE2Interface:
             hikaru_state = self.read_u8(misc_addresses["hikaru_state"][self.game_region])
             if (not self.air_crawl_allowed) and hikaru_state in [7, 8, 9] and self.read_u8(misc_addresses["y_velocity"][self.game_region]) != 0:
                 self.write_u8(misc_addresses["hikaru_state"][self.game_region], 0)
+
+            #Transition randomisation
+            if self.randomised_gates != {}:
+                if current_screen == 5: #In Apespania
+                    if self.transition_state == "going_to_apespania":
+                        self.write_u8(misc_addresses["in_first_person"][self.game_region], 2) #Turn off camera
+                        self.teleport_player_to_position(0x3F85A9B1, 0x42700200, 0xC3CAF71A) #Teleport you to the door 
+                        transition_pointer = self.read_u32(misc_addresses["gate_pointer"][self.game_region]) #Check transition pointer
+                        gate_name = self.read_u64(transition_pointer + 0x1C).to_bytes(8, "little").decode("ascii").rstrip("\x00") #Check name of loaded gate
+                        if gate_name == "gate_b_2":
+                            if '15' in self.music_map:
+                                music_value = self.music_map['15']
+                            else:
+                                music_value = music_table[0xF]["value"]
+                            self.write_u8(music_table[0xF]["address"][self.game_region], music_table[0xF]["value"]) #Restore the Apespania music
+                            self.set_transitions_enabled(False) #Lock transitions from updating
+                            self.write_u8(misc_addresses["room_to_be_loaded"][self.game_region], self.target_room_to_load) #Set room to be loaded
+                            self.write_u8(misc_addresses["reload_room"][self.game_region], 4) #Reload the room
+                            self.transition_state = "transitions_locked" #Update state
+
+                if self.transition_state == "transitions_locked" and (self.read_u8(misc_addresses["game_paused"][self.game_region]) == 0x03 or self.read_u8(misc_addresses["game_paused"][self.game_region]) == 0x01 or hikaru_state == 49): #Game is paused or exiting level or Hikaru is celebrating
+                    self.set_transitions_enabled(True)
+                    self.transition_state = "transitions_temporarily_available"
+                elif self.transition_state == "transitions_temporarily_available" and self.read_u8(misc_addresses["game_paused"][self.game_region]) != 0x03 and self.read_u8(misc_addresses["game_paused"][self.game_region]) != 0x01 and hikaru_state != 49: #Game is unpaused and not exiting level and Hikaru is not celebrating
+                    self.set_transitions_enabled(False)
+                    self.transition_state = "transitions_locked"
+                elif self.transition_state == "transitions_locked": #Transitions locked and ready to be modified
+                    closest_transition = self.get_closest_transition()                
 
             #Double Jump Prevention - future item?
             #if hikaru_state == 4: #Jumping

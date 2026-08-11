@@ -1,3 +1,5 @@
+client_ver = "1.2"
+
 from typing import Optional, Set, Dict, Any
 import asyncio, multiprocessing, traceback
 
@@ -17,7 +19,7 @@ class AE2CommandProcessor(ClientCommandProcessor):
         super().__init__(ctx)
 
 class AE2Context(CommonContext):
-    client_version: str = "v1.0.0"
+    client_version: str = "v1.2.0"
 
     game: str = "Ape Escape 2"
 
@@ -45,22 +47,30 @@ class AE2Context(CommonContext):
                 self.previously_checked_locations = set(args["checked_locations"])
             except:
                 self.previously_checked_locations = set()
-            
-            self.processed_items = 0
-            self.previously_processed_items = -1
-            self.sent_deaths = 0
-            self.deathlink_pending = False
-            self.connection_state = "request"
-            self.reported_all_monkeys = False
 
-            #Set up game
-            self.interface.reset()
-            self.interface.world_key_requirements = self.slot_data["world_key_requirements"]
-            self.interface.character = self.slot_data["character"]
-            self.deathlink_enabled = self.slot_data["deathlink_enabled"]
-            self.interface.deathlink_enabled = self.deathlink_enabled
+            if (not "gen_ver" in self.slot_data) or self.slot_data["gen_ver"] != client_ver:
+                logger.info(f"Version Mismatch: You are using version {client_ver}. The server expects version {self.slot_data["gen_ver"]}.")
+                logger.info(f"To connect to this world, you need to install a compatible ae2.apworld.")
+                Utils.async_start(self.disconnect(), name="disconnecting")
+            else:
+                self.processed_items = 0
+                self.previously_processed_items = -1
+                self.sent_deaths = 0
+                self.deathlink_pending = False
+                self.connection_state = "request"
+                self.reported_all_monkeys = False
 
-            display_connection_status_labels(self)
+                #Set up game
+                self.interface.reset()
+                self.interface.world_key_requirements = self.slot_data["world_key_requirements"]
+                self.interface.character = self.slot_data["character"]
+                self.deathlink_enabled = self.slot_data["deathlink_enabled"]
+                self.interface.deathlink_enabled = self.deathlink_enabled
+                self.interface.randomised_starting_rooms = self.slot_data["randomised_starting_rooms"]
+                self.interface.randomised_gates = self.slot_data["randomised_gates"]
+                self.interface.music_map = self.slot_data["music_map"]
+
+                display_connection_status_labels(self)
 
         #Data Storage retrieved
         if cmd == "Retrieved" and self.connection_state == "requested":
@@ -176,6 +186,11 @@ async def check_game(ctx) -> None:
                     await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
                 elif server_item.item <= 14:
                     ctx.interface.unlock_gadget(item_name_from_id[server_item.item])
+                elif server_item.item == 15: #Progressive Catapult
+                    if "Catapult" in ctx.interface.unlocked_gadgets:
+                        ctx.interface.air_crawl_allowed = True
+                    else:
+                        ctx.interface.unlock_gadget("Catapult")
                 elif server_item.item == 101:
                     ctx.interface.world_keys += 1
                 elif server_item.item == 300:

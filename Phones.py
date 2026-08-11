@@ -41,7 +41,7 @@ phones = [
     Phone(name = "tel114", description = "White Pants Monkeys", level = "Castle Frightmare", is_blue = True, connection_requirements = {"Entry from Spawn": [[]], "Entry from House": [[]]}),
 
     #Vita-Z Factory
-    Phone(name = "tel008", description = "Climbing Tutorial", level = "Vita-Z Factory", connection_requirements = {"Entry from Spawn": [[]], "Entry from Tunnel": [[]]}),
+    Phone(name = "tel018", description = "Climbing Tutorial", level = "Vita-Z Factory", connection_requirements = {"Entry from Spawn": [[]], "Entry from Tunnel": [[]]}),
     Phone(name = "tel017", description = "Pipobot Tutorial", level = "Vita-Z Factory", room = "Mech Tunnel", connection_requirements = {"Tunnel from Entry": [[]], "Tunnel from Arena": [[]]}),
 
     #Casino City
@@ -76,7 +76,7 @@ phones = [
     Phone(name = "tel150", description = "Dinosaurs", level = "The Lost World", is_blue = True, connection_requirements = {"Entry from Spawn": [[]], "Entry from Pterodactyls": [[]], "Entry from Trees": [["Water Net"], ["*Air Crawl"], ["Sky Flyer", "*Hard"]]}),
 
     #Skyscraper City
-    Phone(name = "tel053", description = "Tank Tutorial", level = "Skyscraper City", room = "Tank", connection_requirements = {"Tank from Lobby Corridor": [[]], "Tank from Final Room": [[]]})
+    Phone(name = "tel053", description = "Tank Tutorial", level = "Skyscraper City", room = "Tank", connection_requirements = {"Tank from Lobby": [[]], "Tank from Final Room": [[]]})
 ]
 
 for i in range(0, len(phones)):

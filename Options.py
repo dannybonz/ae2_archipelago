@@ -28,6 +28,20 @@ class LevelShuffle(Choice):
     option_mixed = 2
     default = 0
 
+class RandomiseStartingRoom(Toggle):
+    """
+    Randomises the starting room of each level.
+    """
+    display_name = "Randomise Starting Room"
+    default = False
+
+class RandomiseAreaTransitions(Toggle):
+    """
+    Randomises the destinations of mid-level transitions.
+    """
+    display_name = "Randomise Area Transitions"
+    default = False
+
 class WorldKeyBehaviour(Choice):
     """
     Determines the behaviour of "World Key" items.
@@ -41,6 +55,15 @@ class WorldKeyBehaviour(Choice):
     option_world = 1
     option_alternating = 2
     default = 2
+
+class ExtraWorldKeys(Range):
+    """
+    Adds extra "World Key" items to the pool, making it easier to unlock new levels.
+    """
+    display_name = "Extra World Keys"
+    range_start = 0
+    range_end = 20
+    default = 0
 
 class MessagePhoneLocations(Toggle):
     """
@@ -69,14 +92,36 @@ class ShuffleWaterNet(Toggle):
     """
     display_name = "Shuffle Water Net"
     default = True
-    
-class ShuffleAirCrawl(Toggle):
+
+class MusicRandomisation(Choice):
     """
-    Determines whether to lock the Air Crawl glitch behind receiving an item.
-    If this is enabled and you haven't received the Air Crawl item, then you will be unable to perform the glitch.
+    Randomises the music played throughout the game.
+
+    - default: Music will not be touched by randomisation.
+    - level: The music track for each level will be randomised. Levels with multiple music tracks will have each track randomised individually.
+    - room: The music track for each individual room will be randomised.
     """
-    display_name = "Shuffle Air Crawl"
-    default = False
+    display_name = "Music Randomisation"
+    option_default = 0
+    option_level = 1
+    option_room = 2
+    default = 0
+
+class AirCrawlBehaviour(Choice):
+    """
+    Determines the behaviour of the "Air Crawl" glitch.
+
+    - default: You can perform the Air Crawl glitch as normal.
+    - patched: The Air Crawl glitch is impossible to perform.
+    - item: The Air Crawl glitch can be performed after receiving the "Air Crawl" item.
+    - progressive: The Air Crawl glitch can be performed after receiving two "Progressive Catapult" items.
+    """
+    display_name = "Air Crawl Behaviour"
+    option_default = 0
+    option_patched = 1
+    option_item = 2
+    option_progressive = 3
+    default = 0
 
 class PlayableCharacter(Choice):
     """
@@ -84,6 +129,8 @@ class PlayableCharacter(Choice):
 
     - hikaru: Play as Hikaru (Jimmy). Pipotchi will tag along to help you out.
     - kakeru: Play as Kakeru (Spike). You won't have Pipotchi's help. 
+
+    *Note that playing as Kakeru will disable message phones.
     """
     display_name = "Playable Character"
     option_hikaru = 0
@@ -153,12 +200,15 @@ class AE2Options(PerGameCommonOptions):
     death_link: DeathLink
     goal: Goal
     level_shuffle: LevelShuffle
+    randomise_starting_room: RandomiseStartingRoom
+    music_randomisation: MusicRandomisation
     world_key_behaviour: WorldKeyBehaviour
+    extra_world_keys: ExtraWorldKeys
     message_phone_locations: MessagePhoneLocations
     playable_character: PlayableCharacter
     starting_gadgets: StartingGadgets
     shuffle_water_net: ShuffleWaterNet
-    shuffle_air_crawl: ShuffleAirCrawl
+    air_crawl_behaviour: AirCrawlBehaviour
     logic_difficulty: LogicDifficulty
     hidden_monkey_logic: HiddenMonkeyLogic
     damage_boost_logic: DamageBoostLogic
@@ -169,6 +219,6 @@ class AE2Options(PerGameCommonOptions):
 
 option_groups = [
     OptionGroup("AP Settings", [DeathLink]),
-    OptionGroup("Playthrough", [Goal, LevelShuffle, WorldKeyBehaviour, MessagePhoneLocations, PlayableCharacter, StartingGadgets, ShuffleWaterNet, ShuffleAirCrawl]),
+    OptionGroup("Playthrough", [Goal, LevelShuffle, RandomiseStartingRoom, MusicRandomisation, WorldKeyBehaviour, ExtraWorldKeys, MessagePhoneLocations, PlayableCharacter, StartingGadgets, ShuffleWaterNet, AirCrawlBehaviour]),
     OptionGroup("Logic & Tricks", [LogicDifficulty, HiddenMonkeyLogic, DamageBoostLogic, AirCrawlLogic, BoostJumpingLogic, BoostFlyingLogic, LongJumpingLogic]),
 ]    
