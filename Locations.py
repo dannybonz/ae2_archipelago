@@ -11,6 +11,8 @@ for monkey in monkeys:
     location_id_from_name[monkey.get_location_name()] = monkey.id
 for phone in phones:
     location_id_from_name[phone.get_location_name()] = phone.id
+for x in range(1, 1000):
+    location_id_from_name[f"Gotcha Box: Item #{x}"] = 2000 + x
 location_name_from_id: dict[int, str] = {v: k for k, v in location_id_from_name.items()}
 
 location_groups = {}

@@ -1,144 +1,9 @@
-import socket, struct, platform, os
+import socket, struct, platform, os, datetime
 from .Monkeys import monkeys, monkey_from_name, monkey_from_id
-from .Levels import level_from_name, levels, music_table
+from .Levels import level_from_name, levels, gate_from_name
 from .Phones import phone_from_name
-
-gadget_addresses = {
-    "Stun Club": {"PAL": 0x4D2533, "NTSC": 0x4D1333},
-    "Monkey Net": {"PAL": 0x4D2593, "NTSC": 0x4D1393},
-    "Monkey Radar": {"PAL": 0x4D25F3, "NTSC": 0x4D13F3},
-    "Dash Hoop": {"PAL": 0x4D2653, "NTSC": 0x4D1453},
-    "Catapult": {"PAL": 0x4D26B3, "NTSC": 0x4D14B3},
-    "R.C. Car": {"PAL": 0x4D2713, "NTSC": 0x4D1513},
-    "Sky Flyer": {"PAL": 0x4D2773, "NTSC": 0x4D1573},
-    "Bananarang": {"PAL": 0x4D27D3, "NTSC": 0x4D15D3},
-    "Water Cannon": {"PAL": 0x4D2833, "NTSC": 0x4D1633},
-    "Electro Magnet": {"PAL": 0x4D2893, "NTSC": 0x4D1693},
-    "Power Punch": {"PAL": 0x4D28F3, "NTSC": 0x4D16F3},
-}
-
-gadget_tutorial_addresses = { #Putting these to 1 prevents the gadget tutorial from playing (the game thinks you've already seen it)
-    "Monkey Radar": {"PAL": 0x3E19DB, "NTSC": 0x3E06CB},
-    "Water Net": {"PAL": 0x3E19E4, "NTSC": 0x3E06D4},
-    "R.C. Car": {"PAL": 0x3E19DE, "NTSC": 0x3E06CE},
-    "Power Punch": {"PAL": 0x3E19E3, "NTSC": 0x3E06D3},
-    "See-All Scope": {"PAL": 0x3E1EBD, "NTSC": 0x3E0BAD},
-    "Dash Hoop": {"PAL": 0x3E19DC, "NTSC": 0x3E06CC},
-    "Sky Flyer": {"PAL": 0x3E19DF, "NTSC": 0x3E06CF},
-    "Water Cannon": {"PAL": 0x3E19E1, "NTSC": 0x3E06D1},
-    "Catapult": {"PAL": 0x3E19DD, "NTSC": 0x3E06CD},
-    "Bananarang": {"PAL": 0x3E19E0, "NTSC": 0x3E06D0},
-    "Electro Magnet": {"PAL": 0x3E19E2, "NTSC": 0x3E06D2},
-    "Blue Baboon": {"PAL": 0x3E1A07, "NTSC": 0x3E06F7},
-    "Enter the Monkey": {"PAL": 0x3E1A08, "NTSC": 0x3E06F8},
-    "Specter": {"PAL": 0x3E1EBE, "NTSC": 0x3E0BAE} #We've finally located Specter!
-}
-
-gadget_ids = {"Stun Club": 1, "Monkey Net": 2, "Monkey Radar": 3, "Dash Hoop": 4, "Catapult": 5, "R.C. Car": 6, "Sky Flyer": 7, "Bananarang": 8, "Water Cannon": 9, "Electro Magnet": 10, "Power Punch": 11}
-gadget_from_id = {gadget_id: gadget for gadget, gadget_id in gadget_ids.items()}
-
-equipped_gadget_addresses = {
-    "cross": {"PAL": 0x4D5F24, "NTSC": 0x4D4D24},
-    "triangle": {"PAL": 0x4D5F1C, "NTSC": 0x4D4D1C},
-    "square": {"PAL": 0x4D5F28, "NTSC": 0x4D4D28},
-    "circle": {"PAL": 0x4D5F20, "NTSC": 0x4D4D20}
-}
-
-misc_addresses = {
-    "selected": {"PAL": 0x1F5D80C, "NTSC": 0x1F5D80C}, #Current level hovered on level select screen (addresses are the same)
-    "coins": {"PAL": 0x3E1980, "NTSC": 0x3E0670}, #How many coins you have right now
-    "lives": {"PAL": 0x3E1978, "NTSC": 0x3E0668}, #How many lives you have right now
-    "levels": {"PAL": 0x3E1984, "NTSC": 0x3E0674}, #How many levels you can select from,
-    "character": {"PAL": 0x3E1974, "NTSC": 0x3E0664}, #01 = Hikaru, 02 = Hikaru (+See-All Scope), 03 = Kakeru, 04 = Kakeru (+See-All Scope)
-    "equipped": {"PAL": 0x4D5F34, "NTSC": 0x4D4D34}, #Current held gadget
-    "selected_face_button": {"PAL": 0x4D5F2C, "NTSC": 0x4D4D2C}, 
-    "screen": {"PAL": 0x3B3618, "NTSC": 0x3B2118}, #Current stage/screen/area,
-    "level_to_be_loaded": {"PAL": 0x3B3624, "NTSC": 0x3B2124}, #Room we're going to 
-    "health": {"PAL": 0x3E197C, "NTSC": 0x3E066C}, #Current cookie count
-    "visited": {"PAL": 0x3E198C, "NTSC": 0x3E067C}, #Number of levels visited (updates your unlocked gadgets) - just keep it at 255
-    "cleared": {"PAL": 0x3E1988, "NTSC": 0x3E0678}, #How many levels are cleared,
-    "hikaru_state": {"PAL": 0x4D5784, "NTSC": 0x4D4584}, #7 = crouched, 8 = crawling, 9 = hidden, 17 = submerged, 18 = floating, 49 = celebrating
-    "air_meter_showing": {"PAL": 0x53D058, "NTSC": 0x53C0D4}, #1 = air meter visible (so check for water net unlock)
-    "in_first_person": {"PAL": 0x4D1AF4, "NTSC": 0x4D08F4}, #0 = normal, 1 = first person, other numbers are different camera angles
-    "camera_state": {"PAL": 0x4CCD40, "NTSC": 0x4CBB40}, #0 = frozen, 2 = active
-    "natsumi_introduced": {"PAL": 0x3B366D, "NTSC": 0x3B216D}, #0 = Natsumi hasn't done her introduction, 1 = Natsumi has done her introduction
-    "explosive_pellets": {"PAL": 0x3E19A9, "NTSC": 0x3E0699},
-    "guided_pellets": {"PAL": 0x3E19AA, "NTSC": 0x3E069A},
-    "y_velocity": {"PAL": 0x4D5D14, "NTSC": 0x4D4BC7},
-    "jump_state": {"PAL": 0x4D5D9C, "NTSC": 0x4D4B9C},
-    "message_info_pointer": {"PAL": 0x3DE2CC, "NTSC": 0x3DCF6C},
-
-    "gadget_visible": {"PAL": 0x4D5797, "NTSC": 0x4D4597}, #0 = invisible, 1 = visible
-    "transition_function": {"PAL": 0x383104, "NTSC": 0x381BE4}, #AC620004 = transition updates enabled, 00000000 = disabled 
-    "reload_room": {"PAL": 0x3B35D4, "NTSC": 0x3B20D4}, #4 = reload room
-    "gate_pointer": {"PAL": 0x1E60B8C, "NTSC": 0x1E60B8C},
-    "room_to_be_loaded": {"PAL": 0x3B3620, "NTSC": 0x3B2120},
-    "game_paused": {"PAL": 0x3B3604, "NTSC": 0x3B2104}, #0 = unpaused, 3 = paused
-
-    "x_position": {"PAL": 0x4D5CC0, "NTSC": 0x4D4AC0}, #X position
-    "y_position": {"PAL": 0x4D5CC4, "NTSC": 0x4D4AC4}, #Y position
-    "z_position": {"PAL": 0x4D5CC8, "NTSC": 0x4D4AC8}, #Z position
-
-    "hikaru_visible": {"PAL": 0x4D5796, "NTSC": 0x4D4596} #0 = invisible, 1 = visible
-}
-
-kakeru_addresses = [  # Set these all to 1 if playing as Kakeru
-    {"PAL": 0x3E1E9E, "NTSC": 0x3E0B8E},
-    {"PAL": 0x3E1E9F, "NTSC": 0x3E0B8F},
-    {"PAL": 0x3E1EA0, "NTSC": 0x3E0B90},
-    {"PAL": 0x3E1EA1, "NTSC": 0x3E0B91},
-    {"PAL": 0x3E1EA2, "NTSC": 0x3E0B92},
-    {"PAL": 0x3E1EA3, "NTSC": 0x3E0B93},
-    {"PAL": 0x3E1EA4, "NTSC": 0x3E0B94},
-    {"PAL": 0x3E1EA5, "NTSC": 0x3E0B95},
-    {"PAL": 0x3E1EA6, "NTSC": 0x3E0B96},
-    {"PAL": 0x3E1EA7, "NTSC": 0x3E0B97},
-    {"PAL": 0x3E1EA8, "NTSC": 0x3E0B98},
-    {"PAL": 0x3E1EA9, "NTSC": 0x3E0B99},
-    {"PAL": 0x3E1EAA, "NTSC": 0x3E0B9A},
-    {"PAL": 0x3E1EAB, "NTSC": 0x3E0B9B},
-    {"PAL": 0x3E1EAC, "NTSC": 0x3E0B9C},
-    {"PAL": 0x3E1EAD, "NTSC": 0x3E0B9D},
-    {"PAL": 0x3E1EAE, "NTSC": 0x3E0B9E},
-    {"PAL": 0x3E1EAF, "NTSC": 0x3E0B9F},
-    {"PAL": 0x3E1EB0, "NTSC": 0x3E0BA0},
-    {"PAL": 0x3E1EB1, "NTSC": 0x3E0BA1},
-    {"PAL": 0x3E1EB2, "NTSC": 0x3E0BA2},
-    {"PAL": 0x3E1EB3, "NTSC": 0x3E0BA3},
-    {"PAL": 0x3E1EB4, "NTSC": 0x3E0BA4},
-    {"PAL": 0x3E1EB5, "NTSC": 0x3E0BA5},
-    {"PAL": 0x3E1EB6, "NTSC": 0x3E0BA6},
-    {"PAL": 0x3E1EB7, "NTSC": 0x3E0BA7},
-    {"PAL": 0x3E1EB8, "NTSC": 0x3E0BA8},
-    {"PAL": 0x3E1EB9, "NTSC": 0x3E0BA9},
-    {"PAL": 0x3E1EBA, "NTSC": 0x3E0BAA},
-    {"PAL": 0x3E1EBB, "NTSC": 0x3E0BAB},
-    {"PAL": 0x3E1EBC, "NTSC": 0x3E0BAC},
-    {"PAL": 0x3E1EBD, "NTSC": 0x3E0BAD},
-    {"PAL": 0x3E1EBF, "NTSC": 0x3E0BAF},
-    {"PAL": 0x3E1EC0, "NTSC": 0x3E0BB0},
-    {"PAL": 0x3E1EC1, "NTSC": 0x3E0BB1},
-    {"PAL": 0x3E1EC2, "NTSC": 0x3E0BB2},
-    {"PAL": 0x3E1EC3, "NTSC": 0x3E0BB3},
-    {"PAL": 0x3E1EC4, "NTSC": 0x3E0BB4},
-    {"PAL": 0x3E1EC5, "NTSC": 0x3E0BB5},
-    {"PAL": 0x3E1EC6, "NTSC": 0x3E0BB6},
-    {"PAL": 0x3E1EC7, "NTSC": 0x3E0BB7},
-    {"PAL": 0x3E1EC8, "NTSC": 0x3E0BB8},
-    {"PAL": 0x3E1EC9, "NTSC": 0x3E0BB9},
-    {"PAL": 0x3E1ECA, "NTSC": 0x3E0BBA},
-    {"PAL": 0x3E1ECB, "NTSC": 0x3E0BBB},
-    {"PAL": 0x3E1ECC, "NTSC": 0x3E0BBC},
-    {"PAL": 0x3E1ECD, "NTSC": 0x3E0BBD},
-]
-
-## Room Transition Randomisation Flow ##
-#Load you into Apespania Village (0xF) after every level select
-#This room has known addresses for gate pointer that are easily editable
-#Teleport the player to outside Bullring
-#Freeze transition pointer
-#Load you into the actual desired level
-#Manually update gate details based on player position
+from .Music import music_table
+from .Addresses import gadget_addresses, equipped_gadget_addresses, gadget_ids, gadget_from_id, gadget_tutorial_addresses, misc_addresses, kakeru_addresses, gotcha_box_collectibles
 
 class AE2Interface:
 
@@ -182,14 +47,25 @@ class AE2Interface:
         self.unlocked_levels = 0
 
         self.used_message_info_pointers = []
-        self.read_phones = set()
+        self.activated_phones = set()
+        self.message_phone_locations = False
 
         self.transition_state = "default"
         self.target_room_to_load = 0x71
+        self.transition_pointer = -1
 
         self.natsumi_introduced = False
         self.applied_custom_music_map = False
         self.empty_hands = True
+
+        self.gotcha_box_state = "unknown"
+        self.obtained_gotcha_box_checks = set()
+        self.missing_gotcha_box_checks = []
+        self.gotcha_box_locations = -1
+        self.gotcha_box_gating = -1
+        self.unlocked_collectibles = set()
+
+        self.active_traps = {}
 
     def connect_to_pcsx2(self) -> bool:
         try:
@@ -271,6 +147,11 @@ class AE2Interface:
         self.socket.sendall((13).to_bytes(4, "little") + (6).to_bytes(1, "little") + address.to_bytes(4, "little") + value.to_bytes(4, "little"))
         self.recv_full()
 
+    def write_string_at(self, address, value) -> None: #Writes a string of arbitrary length
+        encoded = value.encode("utf-8") + b"\x00"
+        for i, byte in enumerate(encoded):
+            self.write_u8(address + i, byte)
+
     def recv_full(self):
         header = self.socket.recv(4)
         if not header:
@@ -315,10 +196,6 @@ class AE2Interface:
             self.target_room_to_load = level_from_name[self.current_level_name].room_entrances[room_index].target_room
             self.write_u8(misc_addresses["level_to_be_loaded"][self.game_region], self.target_room_to_load) #Change area to be loaded when select confirms
             self.previous_level_select_location = selected_level #Remember level selector position
-
-    def update_monkey_count(self) -> None:
-        if self.current_level_name != None:
-            self.caught_monkeys_in_current_level = len([monkey for monkey in level_from_name[self.current_level_name].monkeys if monkey.id in self.caught_monkeys]) #Count captured monkeys in level, to be displayed on client
 
     def update_coins(self) -> None:
         new_coins = min(999, self.read_u32(misc_addresses["coins"][self.game_region]) + self.queued_up_coins)
@@ -393,41 +270,135 @@ class AE2Interface:
         if selected_face_button == None or currently_equipped[selected_face_button] == 0: #Nothing
             self.write_u8(misc_addresses["gadget_visible"][self.game_region], 0) #Hide your gadget
             self.write_u8(misc_addresses["selected_face_button"][self.game_region], 4)
+            self.write_u8(misc_addresses["equipped"][self.game_region], 0) #Put nothing in your hands
+            self.write_u32(misc_addresses["invisible_hoop_giver"][self.game_region], 0x00000000) #nop out the instruction that gives you an invisible Dash Hoop
             self.empty_hands = True
         elif self.empty_hands:
             self.write_u8(misc_addresses["gadget_visible"][self.game_region], 1) #Show your gadget
             self.empty_hands = False
+            self.write_u32(misc_addresses["invisible_hoop_giver"][self.game_region], 0xAE220B14) #Restore the function that spawns your gadget in
 
     def trigger_falloff(self) -> None:
-        self.write_u8(misc_addresses["camera_state"][self.game_region], 0) #Freeze camera in place
+        self.write_u8(misc_addresses["in_first_person"][self.game_region], 0x00) #Take you out of first person
+        self.write_u8(misc_addresses["camera_state"][self.game_region], 0x00) #Freeze camera in place
         self.write_u32(misc_addresses["y_position"][self.game_region], 0xFFFFFFFF) #Teleport you below the death barrier
 
-    def set_transitions_enabled(self, enabled) -> None:
-        if enabled:
-            self.write_u32(misc_addresses["transition_function"][self.game_region], 0xAC620004)
-        else:
-            self.write_u32(misc_addresses["transition_function"][self.game_region], 0x00000000)
+    def to_float(self, value) -> int:
+        return struct.unpack('<f', struct.pack('<I', value))[0]
 
-    def teleport_player_to_position(self,  x, y, z) -> None:
+    def get_player_position(self) -> list[float]:
+        return [self.to_float(self.read_u32(misc_addresses["x_position"][self.game_region])), self.to_float(self.read_u32(misc_addresses["y_position"][self.game_region])), self.to_float(self.read_u32(misc_addresses["z_position"][self.game_region]))]
+
+    def teleport_player_to_position(self, x, y, z) -> None:
         self.write_u32(misc_addresses["x_position"][self.game_region], x) 
         self.write_u32(misc_addresses["y_position"][self.game_region], y)
         self.write_u32(misc_addresses["z_position"][self.game_region], z)
 
-    def get_closest_transition(self) -> str:
+    def get_closest_gate(self) -> str:
         level = level_from_name[self.current_level_name]
-        available_transitions = [room_entrance for room_entrance in level.room_entrances if room_entrance.source_room == self.target_room_to_load]
-        if len(available_transitions) == 1:
-            return available_transitions[0].name
-        elif len(available_transitions) > 1:
-            x_pos, y_pos, z_pos = self.read_u32(misc_addresses["x_position"][self.game_region]), self.read_u32(misc_addresses["y_position"][self.game_region]), self.read_u32(misc_addresses["z_position"][self.game_region])
-            #Loop through available transitions and check coordinate positions to find closest entry
+        available_gates = [room_entrance for room_entrance in level.room_entrances if room_entrance.source_room == self.read_u8(misc_addresses["room_to_be_loaded"][self.game_region])]
+        if len(available_gates) == 1:
+            return available_gates[0]
+        elif len(available_gates) > 1:
+            player_position = self.get_player_position()
+            return min(available_gates, key=lambda location: sum((a - self.to_float(b)) ** 2 for a, b in zip(player_position, location.trigger_pos)))
         else:
             return None
+
+    def set_gotcha_box_enabled(self, enabled) -> None:
+        if enabled:
+            self.write_u8(misc_addresses["gotcha_box_enabled"][self.game_region], 0x01)
+            self.gotcha_box_state = "enabled"
+        else:
+            self.write_u8(misc_addresses["gotcha_box_enabled"][self.game_region], 0x00)
+            self.gotcha_box_state = "disabled"
+
+    def unlock_collectible(self, collectible_name) -> None:
+        if collectible_name in gotcha_box_collectibles:
+            self.write_u8(gotcha_box_collectibles[collectible_name][self.game_region], 0xFF)
+            self.unlocked_collectibles.add(collectible_name)
+
+    def restore_collectibles(self) -> None:
+        for collectible_name in self.unlocked_collectibles:
+            self.write_u8(gotcha_box_collectibles[collectible_name][self.game_region], 0xFF)
+
+    def update_gotcha_box(self) -> None:
+        if self.gotcha_box_state == "unknown": #Patches the Gotcha Box to disable itself after each item dispensed, this is so we can see the gotcha box has disabled itself, send a location and then manually re-enable it
+            self.write_u32(misc_addresses["dispense_gotcha_box_capsule"][self.game_region], 0x00000000) #nop
+            self.write_u32(misc_addresses["gotcha_box_patch_a"][self.game_region], 0x3C0201F5) #lui v0,0x01F5
+            self.write_u32(misc_addresses["gotcha_box_patch_b"][self.game_region], 0x3442924C) #ori v0,v0,0x924C
+            self.write_u32(misc_addresses["gotcha_box_patch_c"][self.game_region], 0xAC400000) #sw zero,0x0(v0)
+            self.restore_collectibles() #Restores collectible state when loading into the Travel Station
+        elif self.gotcha_box_state == "enabled" and self.read_u8(misc_addresses["gotcha_box_enabled"][self.game_region]) == 0x00:
+            self.obtained_gotcha_box_checks.add(self.missing_gotcha_box_checks.pop(0))
+
+        if len(self.missing_gotcha_box_checks) > 0 and self.gotcha_box_gating == 1: #Level based gating
+            required_levels = int((len(levels) - 2) * (self.missing_gotcha_box_checks[0] - 2000 / self.gotcha_box_locations))
+            unlocked_level_count = sum(world_key_requirement <= self.world_keys for world_key_requirement in self.world_key_requirements.values())
+            if required_levels > unlocked_level_count:
+                self.set_gotcha_box_enabled(True)
+            else:
+                self.set_gotcha_box_enabled(False)
+        elif len(self.missing_gotcha_box_checks) > 0 and ((self.gotcha_box_gating == 0) or #No gating
+            (self.gotcha_box_gating == 2 and self.gotcha_box_restocks >= int((self.missing_gotcha_box_checks[0] - 2001) / 10))): #Restock based gating
+            self.set_gotcha_box_enabled(True)
+        else:
+            self.set_gotcha_box_enabled(False)            
+
+    def activate_trap(self, trap_id) -> None:
+        self.active_traps[trap_id] = datetime.datetime.now() + datetime.timedelta(seconds = 5)
+        if trap_id == 400: #Lazy Camera Trap
+            self.write_u8(misc_addresses["in_first_person"][self.game_region], 0x00)
+            self.write_u8(misc_addresses["camera_state"][self.game_region], 0x00)
+        elif trap_id == 401: #Rocket Boots Trap
+            self.write_u32(misc_addresses["hikaru_max_speed"][self.game_region], 0x50000000)
+        elif trap_id == 402: #Slowness Trap
+            self.write_u32(misc_addresses["hikaru_max_speed"][self.game_region], 0x3F200000)
+
+    def update_traps(self) -> None:
+        completed_traps = []
+        for trap in self.active_traps:
+            if self.active_traps[trap] < datetime.datetime.now(): #Trap expired
+                completed_traps.append(trap)
+        for trap in completed_traps:
+            if trap == 400: #Lazy Camera Trap
+                self.write_u8(misc_addresses["in_first_person"][self.game_region], 0x00)
+                self.write_u8(misc_addresses["camera_state"][self.game_region], 0x02)                
+            elif trap in [401, 402]: #Speed Traps
+                self.write_u32(misc_addresses["hikaru_max_speed"][self.game_region], 0x3FC7AE12)
+            del self.active_traps[trap]
+
+    def set_transitions_enabled(self, enabled) -> None:
+        if enabled:
+            self.write_u32(misc_addresses["transition_function_a"][self.game_region], 0xAC620004)
+            self.write_u32(misc_addresses["transition_function_b"][self.game_region], 0xB2060007)
+        else:
+            self.write_u32(misc_addresses["transition_function_a"][self.game_region], 0x00000000)
+            self.write_u32(misc_addresses["transition_function_b"][self.game_region], 0x00000000)
+
+    def set_gate_destination_room(self, room_name) -> None:
+        self.write_string_at(self.transition_pointer + 0x54, room_name)
+
+    def set_gate_destination_spawn(self, spawn_name) -> None:
+        self.write_string_at(self.transition_pointer + 0x8C, spawn_name)
+
+    def update_active_gate(self) -> None:
+        if self.read_u8(misc_addresses["in_transition"][self.game_region]) != 2: #Not already in an active transition
+            closest_gate = self.get_closest_gate()
+            if closest_gate != None and f"{closest_gate.name} - {self.current_level_name}" in self.randomised_gates:
+                print(f"{closest_gate.name} found: {self.randomised_gates[f"{closest_gate.name} - {self.current_level_name}"]}")
+                self.set_gate_destination_room(self.randomised_gates[f"{closest_gate.name} - {self.current_level_name}"]["room"])
+                self.set_gate_destination_spawn(self.randomised_gates[f"{closest_gate.name} - {self.current_level_name}"]["spawn"])
 
     def apply_custom_music_map(self) -> None:
         for room in self.music_map:
             self.write_u8(music_table[int(room)]["address"][self.game_region], self.music_map[room])
         self.applied_custom_music_map = True
+
+    def interpret_randomised_gates(self, gate_mapping) -> None:
+        self.randomised_gates = {}
+        for source_gate, target_gate in gate_mapping.items():
+            self.randomised_gates[source_gate] = {"room": gate_from_name[target_gate].dest_room, "spawn": gate_from_name[target_gate].dest_spawn}
 
     def enforce_game_state(self) -> None:
         current_screen = self.read_u8(misc_addresses["screen"][self.game_region])
@@ -463,8 +434,10 @@ class AE2Interface:
 
             if self.read_u8(misc_addresses["in_first_person"][self.game_region]) == 0x0A: #Viewing the level selector
                 self.update_level_select() #Update level select
-            elif self.previous_level_select_location != -1:
-                self.write_u8(misc_addresses["selected"][self.game_region], self.previous_level_select_location)
+            else:
+                self.current_level_name = "Travel Station"
+                if self.previous_level_select_location != -1:
+                    self.write_u8(misc_addresses["selected"][self.game_region], self.previous_level_select_location)
 
             if not self.applied_custom_music_map:
                 self.apply_custom_music_map()
@@ -475,33 +448,40 @@ class AE2Interface:
 
             self.auto_equip()
 
-        elif current_screen != 31: #In a level
+            if self.gotcha_box_gating != -1:
+                self.update_gotcha_box()
+
+        elif current_screen != 31: #Not in the title screen and not in the Travel Station
 
             #Update level name
-            if self.transition_state != "going_to_apespania" and current_screen - 2 < len(levels):
+            if self.transition_state != "teleporting_to_door" and current_screen - 2 < len(levels):
                 self.current_level_name = levels[current_screen - 2].name
             self.write_u8(misc_addresses["cleared"][self.game_region], 255) #Sets 255 levels to cleared - stops you getting taken to boss fights
 
             #Check message phones
-            message_info_pointer = self.read_u32(misc_addresses["message_info_pointer"][self.game_region])
-            if message_info_pointer != None and message_info_pointer != 0 and not message_info_pointer in self.used_message_info_pointers:
-                message_name_pointer = self.read_u32(message_info_pointer + 0x8)
-                self.used_message_info_pointers.append(message_info_pointer)
-                phone_name = self.read_u64(message_name_pointer).to_bytes(8, "little").decode("ascii").rstrip("\x00")
-                print(f"Phone Detected: {phone_name}")
-                if phone_name.strip() in phone_from_name:
-                    self.read_phones.add(phone_from_name[phone_name].id)
+            if self.message_phone_locations:
+                message_info_pointer = self.read_u32(misc_addresses["message_info_pointer"][self.game_region])
+                if message_info_pointer != None and message_info_pointer != 0 and not message_info_pointer in self.used_message_info_pointers:
+                    message_name_pointer = self.read_u32(message_info_pointer + 0x8)
+                    self.used_message_info_pointers.append(message_info_pointer)
+                    phone_name = self.read_u64(message_name_pointer).to_bytes(8, "little").decode("ascii").rstrip("\x00")
+                    print(f"Phone Detected: {phone_name}")
+                    if phone_name.strip() in phone_from_name:
+                        self.activated_phones.add(phone_from_name[phone_name].id)
 
             #Swimming Prevention
             if self.can_swim == False and self.read_u8(misc_addresses["air_meter_showing"][self.game_region]) != 0:
                 self.trigger_falloff()
 
-            self.auto_equip()
+            if current_screen != 30: #Not in the Gadget Trainer
+                 self.auto_equip()
+            self.gotcha_box_state = "unknown" 
 
             if self.deathlink_queued:
                 self.write_u8(misc_addresses["health"][self.game_region], 0) #Set health to 0
                 self.trigger_falloff()
                 self.deathlink_blocked = True
+               
         self.deathlink_queued = False
 
         #Update character state
@@ -518,15 +498,15 @@ class AE2Interface:
 
         if current_screen == 33: #"Catch Monkeys!" screen
             if self.randomised_gates != {} and self.transition_state == "default" and self.current_level_name != None and len(level_from_name[self.current_level_name].room_entrances) > 1:
-                self.write_u8(misc_addresses["level_to_be_loaded"][self.game_region], 0xF) #Load you into the Apespania Village instead
+                self.write_u8(misc_addresses["level_to_be_loaded"][self.game_region], 0x54) #Load you into Moon Base (before Magnetic Panels)
                 if str(int(self.target_room_to_load)) in self.music_map:
                     music_value = self.music_map[str(int(self.target_room_to_load))]
                 else:
                     music_value = music_table[self.target_room_to_load]["value"]
-                self.write_u8(music_table[0xF]["address"][self.game_region], music_value) #Replace Apespania music with desired level's music
-                self.transition_state = "going_to_apespania"
+                self.write_u8(music_table[0x54]["address"][self.game_region], music_value) #Replace Moon Base Moving Platforms music with desired level's music
+                self.transition_state = "teleporting_to_door"
 
-        if (current_screen >= 1 and current_screen < 30): #In gameplay/credits
+        if (current_screen >= 1 and current_screen < 30): #In the hub or in a level
             #Check lives for deathlink
             if self.deathlink_enabled:
                 new_lives = self.read_u32(misc_addresses["lives"][self.game_region])
@@ -539,7 +519,6 @@ class AE2Interface:
 
             #Update monkeys
             self.check_captured_monkeys()
-            self.update_monkey_count() #Continuously update monkey count to be shown on client
 
             #Tutorial/Cutscene Block
             for address in gadget_tutorial_addresses.values():
@@ -556,6 +535,7 @@ class AE2Interface:
                 self.update_explosive_pellets() 
             if self.queued_up_guided_pellets:
                 self.update_guided_pellets() 
+            self.update_traps()
 
             #Air Crawl Prevention
             hikaru_state = self.read_u8(misc_addresses["hikaru_state"][self.game_region])
@@ -564,31 +544,33 @@ class AE2Interface:
 
             #Transition randomisation
             if self.randomised_gates != {}:
-                if current_screen == 5: #In Apespania
-                    if self.transition_state == "going_to_apespania":
-                        self.write_u8(misc_addresses["in_first_person"][self.game_region], 2) #Turn off camera
-                        self.teleport_player_to_position(0x3F85A9B1, 0x42700200, 0xC3CAF71A) #Teleport you to the door 
-                        transition_pointer = self.read_u32(misc_addresses["gate_pointer"][self.game_region]) #Check transition pointer
-                        gate_name = self.read_u64(transition_pointer + 0x1C).to_bytes(8, "little").decode("ascii").rstrip("\x00") #Check name of loaded gate
-                        if gate_name == "gate_b_2":
-                            if '15' in self.music_map:
-                                music_value = self.music_map['15']
-                            else:
-                                music_value = music_table[0xF]["value"]
-                            self.write_u8(music_table[0xF]["address"][self.game_region], music_table[0xF]["value"]) #Restore the Apespania music
-                            self.set_transitions_enabled(False) #Lock transitions from updating
-                            self.write_u8(misc_addresses["room_to_be_loaded"][self.game_region], self.target_room_to_load) #Set room to be loaded
-                            self.write_u8(misc_addresses["reload_room"][self.game_region], 4) #Reload the room
-                            self.transition_state = "transitions_locked" #Update state
+                #Teleport to known door in Moon Base, record details, lock transitions and then warp you back to desired room
+                if current_screen == 0x1B and self.transition_state == "teleporting_to_door":
+                    self.write_u8(misc_addresses["in_first_person"][self.game_region], 2) #Turn off camera
+                    self.teleport_player_to_position(0xC33D34DD, 0x41DF3F4F, 0xC1BA0349) #Teleport you to the door 
+                    self.transition_pointer = self.read_u32(misc_addresses["gate_pointer"][self.game_region]) #Check transition pointer
+                    if self.read_u64(self.transition_pointer + 0x54) == 0x31435f4f4f4d: #MOO_D identifier for target room
+                        if '84' in self.music_map:
+                            music_value = self.music_map['84']
+                        else:
+                            music_value = music_table[0x54]["value"]
+                        self.write_u8(music_table[0x54]["address"][self.game_region], music_value) #Restore the Moon Base music
+                        self.set_transitions_enabled(False) #Lock transitions from updating
+                        self.write_u8(misc_addresses["room_to_be_loaded"][self.game_region], self.target_room_to_load) #Set room to be loaded
+                        self.write_u8(misc_addresses["reload_room"][self.game_region], 4) #Reload the room
+                        self.transition_state = "transitions_locked" #Update state
 
-                if self.transition_state == "transitions_locked" and (self.read_u8(misc_addresses["game_paused"][self.game_region]) == 0x03 or self.read_u8(misc_addresses["game_paused"][self.game_region]) == 0x01 or hikaru_state == 49): #Game is paused or exiting level or Hikaru is celebrating
+                #Game is paused or exiting level or Hikaru is celebrating, so unlock transitions
+                if self.transition_state == "transitions_locked" and (self.read_u8(misc_addresses["game_paused"][self.game_region]) == 0x03 or self.read_u8(misc_addresses["game_paused"][self.game_region]) == 0x01 or hikaru_state == 49):
                     self.set_transitions_enabled(True)
                     self.transition_state = "transitions_temporarily_available"
-                elif self.transition_state == "transitions_temporarily_available" and self.read_u8(misc_addresses["game_paused"][self.game_region]) != 0x03 and self.read_u8(misc_addresses["game_paused"][self.game_region]) != 0x01 and hikaru_state != 49: #Game is unpaused and not exiting level and Hikaru is not celebrating
+                #Game is unpaused and not exiting level and Hikaru is not celebrating, so lock transitions again           
+                elif self.transition_state == "transitions_temporarily_available" and self.read_u8(misc_addresses["game_paused"][self.game_region]) != 0x03 and self.read_u8(misc_addresses["game_paused"][self.game_region]) != 0x01 and hikaru_state != 49: 
                     self.set_transitions_enabled(False)
                     self.transition_state = "transitions_locked"
-                elif self.transition_state == "transitions_locked": #Transitions locked and ready to be modified
-                    closest_transition = self.get_closest_transition()                
+                #Transitions are locked and ready to be messed with
+                elif self.transition_state == "transitions_locked":
+                    self.update_active_gate()
 
             #Double Jump Prevention - future item?
             #if hikaru_state == 4: #Jumping

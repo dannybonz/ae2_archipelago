@@ -1,4 +1,4 @@
-gen_ver = "1.2"
+gen_ver = "1.3"
 
 from BaseClasses import Item, ItemClassification
 from worlds.AutoWorld import WebWorld, World
@@ -10,7 +10,8 @@ from .Regions import create_regions
 from Options import OptionError
 import copy, math
 from .Monkeys import monkeys
-from .Levels import levels, level_from_name, build_randomised_maps, music_table, randomised_music_pool
+from .Levels import levels, level_from_name, build_randomised_maps
+from .Music import music_table, randomised_music_pool
 
 #Identifier for Archipelago to recognize and run the client
 def run_client() -> None:
@@ -109,19 +110,34 @@ class AE2World(World):
         elif self.options.air_crawl_behaviour.value == 3:
             progression_items.append("Progressive Catapult")
         if self.options.shuffle_water_net.value:
-            progression_items.append("Water Net")        
-
+            progression_items.append("Water Net")
+        if self.options.gotcha_box_gating.value == 2:
+            progression_items += ["Gotcha Box Restock"] * int((self.options.gotcha_box_locations.value - 1) / 10) #Each Gotcha Box Restock item adds 10 locations
         return sorted(progression_items)
 
     def pick_useful_items(self) -> list[str]:
-        useful_items = [] #No useful items yet
+        useful_items = ["Dance, Monkey, Dance!", "Monkey Football", "Monkey Climber", "Tissues R.C. Car Body", "Sushi R.C. Car Body", "Black R.C. Car Body", "Pudding R.C. Car Body"]
         return sorted(useful_items)
 
     def pick_filler_items(self, remaining_locations) -> list[str]:
         filler_items = []
+        if self.options.shuffle_collectible_filler.value:
+            all_filler_collectibles = [item_name for item_name, item_id in item_id_from_name.items() if item_id >= 1007 and item_id <= 1248]
+            self.random.shuffle(all_filler_collectibles)
+            number_of_collectibles_to_include = min(int(remaining_locations * 0.5), len(all_filler_collectibles))
+            filler_items += all_filler_collectibles[:number_of_collectibles_to_include]
+
         while len(filler_items) < remaining_locations:
             filler_items.append(self.get_filler_item_name())
         return sorted(filler_items)
+
+    def pick_trap_items(self, number_of_traps) -> list[str]:
+        trap_items = []
+        trap_weights = {"Lazy Camera Trap": self.options.lazy_camera_trap_weight.value, "Rocket Boots Trap": self.options.rocket_boots_trap_weight.value, "Slowness Trap": self.options.slowness_trap_weight.value}
+        if sum(list(trap_weights.values())) != 0:
+            for i in range(0, number_of_traps):
+                trap_items.append(self.random.choices(list(trap_weights.keys()), weights=list(trap_weights.values()), k=1)[0])
+        return sorted(trap_items)
 
     def create_items(self) -> None:
         item_pool: list[AE2Item] = []
@@ -140,7 +156,13 @@ class AE2World(World):
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         remaining_locations = total_locations - len(self.progression_item_names + self.useful_item_names)
 
-        self.filler_item_names = self.pick_filler_items(total_locations - len(self.progression_item_names + self.useful_item_names))
+        number_of_traps = int(remaining_locations * (self.options.trap_percentage.value/100)) #Determines the number of traps based on the number of filler items left and the desired trap percentage, rounding down
+        if number_of_traps > 0:
+            self.trap_item_names = self.pick_trap_items(number_of_traps)
+        else:
+            self.trap_item_names = []
+
+        self.filler_item_names = self.pick_filler_items(total_locations - len(self.progression_item_names + self.useful_item_names + self.trap_item_names))
 
         for item in self.progression_item_names + self.useful_item_names + self.filler_item_names + self.trap_item_names:
             item_pool.append(self.create_item(item))
@@ -160,7 +182,9 @@ class AE2World(World):
             self.options.damage_boost_logic.value = slot_data["damage_boost_logic"]
             self.options.hidden_monkey_logic.value = slot_data["hidden_monkey_logic"]
             self.randomised_starting_rooms = slot_data["randomised_starting_rooms"]
-            self.options.message_phone_locations.value = True
+            self.options.gotcha_box_locations.value = slot_data["gotcha_box_locations"]
+            self.options.gotcha_box_gating.value = slot_data["gotcha_box_gating"]
+            self.options.message_phone_locations.value = slot_data["message_phone_locations"]
             self.randomised_gates = {}
         else:
             if self.options.playable_character.value == 0: #playing as Hikaru
@@ -190,7 +214,7 @@ class AE2World(World):
                 if the_gadget != None and not the_gadget in self.starting_items:
                     self.starting_items.append(the_gadget)
 
-            if self.options.message_phone_locations.value == False and not "Monkey Net" in self.starting_items:
+            if self.options.message_phone_locations.value == False and self.options.gotcha_box_locations.value == 0 and not "Monkey Net" in self.starting_items:
                 self.starting_items.append("Monkey Net")
 
             if self.options.level_shuffle.value:
@@ -216,15 +240,6 @@ class AE2World(World):
                     to_be_added = bosses + not_bosses[3:]
                     self.random.shuffle(to_be_added)
                     level_order += to_be_added
-
-                if not "Monkey Net" in self.starting_items: #Ensure there is at least one level in sphere 1 with an available phone
-                    levels_with_free_phones = ["Liberty Island", "Breezy Village", "Viva Apespania", "Castle Frightmare", "Vita-Z Factory", "Casino City", "Ninja Hideout", "Snowball Mountain", "The Blue Baboon", "The Lost World"]
-                    if "Water Net" in self.starting_items:
-                        levels_with_free_phones.append("Port Calm")
-                    free_phone_level = self.random.choice(levels_with_free_phones)
-                    early_level_index, free_phone_level_index = self.random.randint(0, 2), level_order.index(free_phone_level)
-                    level_order[free_phone_level_index], level_order[early_level_index] = level_order[early_level_index], level_order[free_phone_level_index]
-
                 level_order += [level.name for level in levels if level.keep_at_end]
             else: #Level shuffle disabled
                 level_order = [level.name for level in levels]
@@ -282,14 +297,11 @@ class AE2World(World):
         self.useful_item_names = self.pick_useful_items()
 
     def fill_slot_data(self) -> dict[str, object]:
-        return {"world_key_requirements": self.world_key_requirements, "deathlink_enabled": self.options.death_link.value, "logic_difficulty": self.options.logic_difficulty.value, "damage_boost_logic": self.options.damage_boost_logic.value, "air_crawl_logic": self.options.air_crawl_logic.value, "boost_jump_logic": self.options.boost_jump_logic.value, "boost_fly_logic": self.options.boost_fly_logic.value, "long_jump_logic": self.options.long_jump_logic.value, "character": self.options.playable_character.value, "hidden_monkey_logic": self.options.hidden_monkey_logic.value, "randomised_starting_rooms": self.randomised_starting_rooms, "randomised_gates": self.randomised_gates, "music_map": self.music_map, "gen_ver": gen_ver}
+        return {"world_key_requirements": self.world_key_requirements, "deathlink_enabled": self.options.death_link.value, "logic_difficulty": self.options.logic_difficulty.value, "damage_boost_logic": self.options.damage_boost_logic.value, "air_crawl_logic": self.options.air_crawl_logic.value, "boost_jump_logic": self.options.boost_jump_logic.value, "boost_fly_logic": self.options.boost_fly_logic.value, "long_jump_logic": self.options.long_jump_logic.value, "character": self.options.playable_character.value, "hidden_monkey_logic": self.options.hidden_monkey_logic.value, "randomised_starting_rooms": self.randomised_starting_rooms, "randomised_gates": self.randomised_gates, "music_map": self.music_map, "gen_ver": gen_ver, "gotcha_box_locations": self.options.gotcha_box_locations.value, "gotcha_box_gating": self.options.gotcha_box_gating.value, "message_phone_locations": self.options.message_phone_locations.value}
 
     def get_filler_item_name(self) -> str:
-        random = self.random.random()
-
-        items = ["Gold Coin", "10 Gold Coins", "20 Gold Coins", "Jacket", "Explosive Pellet", "Guided Pellet", "Cookie", "Deluxe Cookie", "Case of Explosive Pellets", "Case of Guided Pellets"]
+        items = ["Gold Coin", "10 Gold Coins", "20 Gold Coins", "Jacket", "Explosive Pellet", "Guided Pellet", "Cookie", "Deluxe Cookie", "3 Explosive Pellets", "3 Guided Pellets"]
         weights = [5, 4, 3, 3, 2, 2, 5, 3, 1, 1]
-
         return self.random.choices(items, weights=weights, k=1)[0]
     
     def create_item(self, name: str) -> AE2Item:
@@ -298,6 +310,8 @@ class AE2World(World):
                 item_classification = ItemClassification.progression
             elif name in self.useful_item_names:
                 item_classification = ItemClassification.useful
+            elif name in self.trap_item_names:
+                item_classification = ItemClassification.trap
             else:
                 item_classification = ItemClassification.filler
         except:

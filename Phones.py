@@ -76,7 +76,7 @@ phones = [
     Phone(name = "tel150", description = "Dinosaurs", level = "The Lost World", is_blue = True, connection_requirements = {"Entry from Spawn": [[]], "Entry from Pterodactyls": [[]], "Entry from Trees": [["Water Net"], ["*Air Crawl"], ["Sky Flyer", "*Hard"]]}),
 
     #Skyscraper City
-    Phone(name = "tel053", description = "Tank Tutorial", level = "Skyscraper City", room = "Tank", connection_requirements = {"Tank from Lobby": [[]], "Tank from Final Room": [[]]})
+    Phone(name = "tel053", description = "Tank Tutorial", level = "Skyscraper City", room = "Tank", connection_requirements = {"Tank from Lobby": [[]], "Tank from Final Room": [["Power Punch"]]})
 ]
 
 for i in range(0, len(phones)):

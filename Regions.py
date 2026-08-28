@@ -2,7 +2,7 @@ from BaseClasses import Region
 from worlds.AutoWorld import World
 from .Locations import AE2Location, location_id_from_name, location_name_from_id
 from .Items import AE2Item
-from BaseClasses import ItemClassification
+from BaseClasses import ItemClassification, LocationProgressType
 from .Levels import levels
 from .Monkeys import monkey_from_name
 import copy
@@ -119,7 +119,37 @@ def can_catch_all_monkeys(state, world, player):
         for monkey in level.monkeys:
             if not state.can_reach_location(monkey.get_location_name(), player):
                 return False
-    return True         
+    return True
+
+def count_catchable_monkeys(state, world, player):
+    catchable_count = 0
+    for level in [level for level in levels if level.name != "Final Showdown with Specter!"]:
+        catchable_count += len([monkey for monkey in level.monkeys if state.can_reach_location(monkey.get_location_name(), player)])
+    return catchable_count
+
+def can_obtain_gotcha_box_location(state, world, player, gotcha_box_location_number):
+    unlocked_level_count = sum(world_key_requirement <= state.count("World Key", player) for world_key_requirement in world.world_key_requirements.values())
+    gotcha_box_location_number_percentage = gotcha_box_location_number / world.options.gotcha_box_locations.value #How far into the Gotcha Box you have to progress in order to reach this location
+
+    #Check if location is accessible
+    can_access = False
+    if world.options.gotcha_box_gating.value == 1: #Levels
+        required_levels = int((len(levels) - 2) * gotcha_box_location_number_percentage)
+        if unlocked_level_count < required_levels:
+            return False
+    elif world.options.gotcha_box_gating.value == 2: #Item
+        required_restock_items = int((gotcha_box_location_number) / 10)
+        if state.count("Gotcha Box Restock", player) < required_restock_items:
+            return False
+
+    #Chcek if location is logically expected
+    if state.has("Glitched Item", player):
+        return True
+    else:
+        level_curve = gotcha_box_location_number_percentage ** 0.5 #End game levels put more into logic than early game ones
+        logical_level_unlock_expectation = int(level_curve * (len(levels) - 2)) #Specter fights don't add logical Gotcha Box locations
+        return unlocked_level_count > logical_level_unlock_expectation and count_catchable_monkeys(state, world, player) > (300 * (gotcha_box_location_number_percentage - 0.05))
+    return False
 
 def create_regions(world: World) -> None:
     player = world.player
@@ -127,6 +157,26 @@ def create_regions(world: World) -> None:
     
     menu_region = Region("Menu", player, multiworld)
     multiworld.regions.append(menu_region)
+
+    #Create Gotcha Box region
+    gotcha_box_region = Region("Gotcha Box", player, multiworld)
+    multiworld.regions.append(gotcha_box_region)
+    menu_region.connect(connecting_region = gotcha_box_region)
+
+    #Create Gotcha Box locations
+    for x in range(0, world.options.gotcha_box_locations.value):
+        gotcha_box_location = AE2Location(player, f"Gotcha Box: Item #{x + 1}", 2001 + x, gotcha_box_region)
+        gotcha_box_location.access_rule = lambda state, x = x:can_obtain_gotcha_box_location(state, world, player, x)
+        gotcha_box_region.locations += [gotcha_box_location]
+
+    #Gotcha Box forced filler
+    if world.options.gotcha_box_forced_filler_percentage.value > 0 and not hasattr(multiworld, "re_gen_passthrough"):
+        number_of_forced_filler_locations = int(world.options.gotcha_box_locations.value * (world.options.gotcha_box_forced_filler_percentage.value / 100))
+        possible_locations = [f"Gotcha Box: Item #{x + 1}" for x in range(0, world.options.gotcha_box_locations.value)]
+        for x in range(0, number_of_forced_filler_locations):
+            chosen_location = world.random.choices(possible_locations, weights = range(1, len(possible_locations) + 1))[0] #Weight the forced filler locations to be the later ones to reduce grinding
+            multiworld.get_location(chosen_location, player).progress_type = LocationProgressType.EXCLUDED
+            possible_locations.remove(chosen_location)
 
     #Create level regions and locations
     for level in levels:
