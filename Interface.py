@@ -333,9 +333,9 @@ class AE2Interface:
             self.obtained_gotcha_box_checks.add(self.missing_gotcha_box_checks.pop(0))
 
         if len(self.missing_gotcha_box_checks) > 0 and self.gotcha_box_gating == 1: #Level based gating
-            required_levels = int((len(levels) - 2) * (self.missing_gotcha_box_checks[0] - 2000 / self.gotcha_box_locations))
+            required_levels = int((len(levels) - 2) * ((self.missing_gotcha_box_checks[0] - 2001) / self.gotcha_box_locations))
             unlocked_level_count = sum(world_key_requirement <= self.world_keys for world_key_requirement in self.world_key_requirements.values())
-            if required_levels > unlocked_level_count:
+            if unlocked_level_count >= required_levels:
                 self.set_gotcha_box_enabled(True)
             else:
                 self.set_gotcha_box_enabled(False)

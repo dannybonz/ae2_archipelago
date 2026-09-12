@@ -41,7 +41,7 @@ class AE2CommandProcessor(ClientCommandProcessor):
             logger.info(self.ctx.interface.get_position_str())
 
 class AE2Context(SuperContext):
-    client_version: str = "v1.3.0"
+    client_version: str = "v1.3.1"
     game: str = "Ape Escape 2"
 
     command_processor = AE2CommandProcessor

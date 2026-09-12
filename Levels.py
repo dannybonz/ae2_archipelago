@@ -103,7 +103,7 @@ levels = [
         #Entry
         RoomEntrance(name = "Entry from Spawn", can_start = True, target_room = 0x1A, connection_requirements = {"Bar from Entry": [["*Attack"], ["Catapult"], ["*Hard"]], "Circus from Entry": [["Catapult"], ["Stun Club", "*Hard"], ["Power Punch", "*Hard"], ["Sky Flyer", "*Hard"], ["*Expert", "Pipotchi"]]}),
         RoomEntrance(name = "Entry from Circus", trigger_pos = [0xc3006f36, 0x41000802, 0x439549e9], dest_room = "AME_A", dest_spawn = "spawn_a_2", source_room = 0x1C, target_room = 0x1A, connection_requirements = {"Bar from Entry": [["*Attack"], ["Catapult"], ["*Hard"]], "Circus from Entry": [[]]}),
-        RoomEntrance(name = "Entry from Bar", trigger_pos = [0x3f9a2615, 0x40d01004, 0x42798e53], dest_room = "AME_A", dest_spawn = "spawn_a_1", source_room = 0x1B, target_room = 0x1A, connection_requirements = {"Bar from Entry": [[]], "Circus from Entry": [["Catapult"], ["Stun Club", "*Hard"], ["Power Punch", "*Hard"], ["Sky Flyer", "*Hard"], ["*Expert", "Pipotchi"]]}),
+        RoomEntrance(name = "Entry from Bar", trigger_pos = [0x3f9a2615, 0x40d01004, 0x42798e53], dest_room = "AME_A", dest_spawn = "spawn_a_1", source_room = 0x1B, target_room = 0x1A, connection_requirements = {"Bar from Entry": [[]], "Circus from Entry": [["Catapult"]]}),
 
         #Bar
         RoomEntrance(name = "Bar from Entry", trigger_pos = [0xc337b3da, 0x42200200, 0xc4452769], dest_room = "AME_B", dest_spawn = "spawn_b_1", can_start = True, source_room = 0x1A, target_room = 0x1B, connection_requirements = {"Entry from Bar": [[]]}),
@@ -245,7 +245,7 @@ levels = [
 
         #Booby Traps
         RoomEntrance(name = "Booby Traps from Entry", trigger_pos = [0xc3656d28, 0xc2bdfeff, 0x430b979f], dest_room = "EGY_B", dest_spawn = "spawn_b_1", can_start = True, source_room = 0x31, target_room = 0x32, connection_requirements = {"Moving Platforms #1 from Booby Traps": [["Water Net", "R.C. Car", "*Gear", "*Pyramid Sarcophagus"], ["Water Net", "*Air Crawl", "*Gear", "*Pyramid Sarcophagus"]], "Entry from Booby Traps": [[]]}), 
-        RoomEntrance(name = "Booby Traps from Moving Platforms #1", trigger_pos = [0xc2d591f6, 0xc281feff, 0x443730c2], dest_room = "EGY_B", dest_spawn = "spawn_b_2", source_room = 0x33, target_room = 0x32, connection_requirements = {"Moving Platforms #1 from Booby Traps": [[]], "Entry from Booby Traps": [["*Gear", "*Air Crawl"]]}), 
+        RoomEntrance(name = "Booby Traps from Moving Platforms #1", trigger_pos = [0xc2d591f6, 0xc281feff, 0x443730c2], dest_room = "EGY_B", dest_spawn = "spawn_b_2", source_room = 0x33, target_room = 0x32, connection_requirements = {"Moving Platforms #1 from Booby Traps": [[]], "Entry from Booby Traps": [["*Gear", "*Air Crawl"], ["*Gear", "*Hard"]]}), 
 
         #Moving Platforms #1
         RoomEntrance(name = "Moving Platforms #1 from Booby Traps", trigger_pos = [0x4368cfa8, 0x42cfcdc7, 0xc396b54b], dest_room = "EGY_C", dest_spawn = "spawn_c_1", can_start = True, source_room = 0x32, target_room = 0x33, connection_requirements = {"Booby Traps from Moving Platforms #1": [[]], "Moving Platforms #2 from Moving Platforms #1": [["R.C. Car"], ["Water Cannon"], ["*Air Crawl"]]}), 
@@ -361,7 +361,7 @@ levels = [
 
         #Final Room
         RoomEntrance(name = "Final Room from Tank", trigger_pos = [0xc4112d69, 0x43d00040, 0x444d3105], dest_room = "CIT_E", dest_spawn = "spawn_e_1", can_start = True, source_room = 0x46, target_room = 0x47, connection_requirements = {"Tank from Final Room": [[]], "Lobby from Final Room": [["Electro Magnet", "Catapult", "R.C. Car"], ["*Air Crawl"], ["Electro Magnet", "Catapult", "Sky Flyer", "*Boost Jump", "*Expert"]]}),
-        RoomEntrance(name = "Final Room from Lobby", trigger_pos = [0x43f8eff1, 0x43020080, 0xc3be787d], dest_room = "CIT_E", dest_spawn = "spawn_e_2", source_room = 0x44, target_room = 0x47, connection_requirements = {}) #THIS HAS NO LOGIC RIGHT NOW
+        RoomEntrance(name = "Final Room from Lobby", trigger_pos = [0x43f8eff1, 0x43020080, 0xc3be787d], dest_room = "CIT_E", dest_spawn = "spawn_e_2", source_room = 0x44, target_room = 0x47, connection_requirements = {}) #Missing logic, though it doesn't really matter since no monkeys are connected to it and you cannot get here without also being able to get every monkey via alternative methods
     ]),
 
     #Code C.H.I.M.P.
