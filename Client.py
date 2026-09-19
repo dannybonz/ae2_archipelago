@@ -41,7 +41,7 @@ class AE2CommandProcessor(ClientCommandProcessor):
             logger.info(self.ctx.interface.get_position_str())
 
 class AE2Context(SuperContext):
-    client_version: str = "v1.3.1"
+    client_version: str = "v1.3.2"
     game: str = "Ape Escape 2"
 
     command_processor = AE2CommandProcessor
@@ -62,6 +62,8 @@ class AE2Context(SuperContext):
 
         self.travel_station_status_card = None
         self.level_status_card = None
+
+        self.cached_tracker_level_name = "Travel Station"
 
     def on_package(self, cmd: str, args: Dict[str, Any]) -> None:
         super().on_package(cmd, args) #UT
@@ -425,6 +427,11 @@ async def check_game(ctx) -> None:
             return
 
         ctx.player_instruction("You are now connected and ready to play. Go ape!")
+
+        #Update tracker level
+        if (ctx.interface.tracker_level_name != ctx.cached_tracker_level_name):
+            await ctx.send_msgs([{"cmd": "Set", "key": f"ae2_current_level_{ctx.team}_{ctx.slot}", "default": None, "want_reply": False, "operations": [{"operation": "replace", "value": ctx.interface.tracker_level_name}]}])
+            ctx.cached_tracker_level_name = ctx.interface.tracker_level_name
 
         #Check for unsent locations
         new_locations = (ctx.interface.caught_monkeys.union(ctx.interface.activated_phones).union(ctx.interface.obtained_gotcha_box_checks)).difference(ctx.previously_checked_locations)

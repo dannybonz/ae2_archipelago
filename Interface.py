@@ -65,6 +65,8 @@ class AE2Interface:
         self.gotcha_box_gating = -1
         self.unlocked_collectibles = set()
 
+        self.tracker_level_name = "Travel Station"
+
         self.active_traps = {}
 
     def connect_to_pcsx2(self) -> bool:
@@ -436,6 +438,7 @@ class AE2Interface:
                 self.update_level_select() #Update level select
             else:
                 self.current_level_name = "Travel Station"
+                self.tracker_level_name = self.current_level_name
                 if self.previous_level_select_location != -1:
                     self.write_u8(misc_addresses["selected"][self.game_region], self.previous_level_select_location)
 
@@ -456,6 +459,7 @@ class AE2Interface:
             #Update level name
             if self.transition_state != "teleporting_to_door" and current_screen - 2 < len(levels):
                 self.current_level_name = levels[current_screen - 2].name
+                self.tracker_level_name = self.current_level_name
             self.write_u8(misc_addresses["cleared"][self.game_region], 255) #Sets 255 levels to cleared - stops you getting taken to boss fights
 
             #Check message phones
