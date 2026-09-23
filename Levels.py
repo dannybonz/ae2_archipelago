@@ -390,8 +390,8 @@ levels = [
         RoomEntrance(name = "Moving Platforms from Entry", trigger_pos = [0xc46e94a5, 0xc1c3fc0b, 0xc1c62b65], dest_room = "NAZ_D", dest_spawn = "spawn_d_2", source_room = 0x48, target_room = 0x4C, connection_requirements = {"Treadmills from Moving Platforms": [[]], "Magnetic Panels Start from Moving Platforms": [[]], "Entry from Moving Platforms": [[]]}),
 
         #Magnetic Panels
-        RoomEntrance(name = "Magnetic Panels Start from Moving Platforms", trigger_pos = [0x43e45af8, 0xc295fd59, 0xc444e5e0], dest_room = "NAZ_D1", dest_spawn = "spawn_d1_1", can_start = True, source_room = 0x4C, target_room = 0x4D, connection_requirements = {"Moving Platforms from Magnetic Panels End": [["Electro Magnet", "Sky Flyer"], ["Electro Magnet", "*Hard", "Pipotchi"], ["*Boost Fly", "*Hard", "Power Punch"]], "Moving Platforms from Magnetic Panels Start": [[]]}),
-        RoomEntrance(name = "Magnetic Panels End from Moving Platforms", trigger_pos = [0xc3728c7a, 0xc28bfeff, 0xc38ecd40], dest_room = "NAZ_D1", dest_spawn = "spawn_d1_2", source_room = 0x4C, target_room = 0x4D, connection_requirements = {"Moving Platforms from Magnetic Panels End": [[]], "Moving Platforms from Magnetic Panels Start": [["Electro Magnet", "Sky Flyer"], ["Electro Magnet", "*Hard", "Pipotchi"], ["*Boost Fly", "*Hard"]]})
+        RoomEntrance(name = "Magnetic Panels Start from Moving Platforms", trigger_pos = [0x43e45af8, 0xc295fd59, 0xc444e5e0], dest_room = "NAZ_D1", dest_spawn = "spawn_d1_1", can_start = True, source_room = 0x4C, target_room = 0x4D, connection_requirements = {"Moving Platforms from Magnetic Panels End": [["Electro Magnet", "Sky Flyer"], ["Electro Magnet", "*Expert", "Pipotchi"]], "Moving Platforms from Magnetic Panels Start": [[]]}),
+        RoomEntrance(name = "Magnetic Panels End from Moving Platforms", trigger_pos = [0xc3728c7a, 0xc28bfeff, 0xc38ecd40], dest_room = "NAZ_D1", dest_spawn = "spawn_d1_2", source_room = 0x4C, target_room = 0x4D, connection_requirements = {"Moving Platforms from Magnetic Panels End": [[]], "Moving Platforms from Magnetic Panels Start": [["*Air Crawl"]]})
     ]),
 
     #Giant Yellow Monkey Battle!
@@ -440,7 +440,7 @@ levels = [
         
         #Magnetic Panels
         RoomEntrance(name = "Magnetic Panels from Moving Platforms", trigger_pos = [0xc3433fe1, 0x41df3f4f, 0xc1b20ad8], dest_room = "MOO_C1", dest_spawn = "spawn_c1_1", can_start = True, source_room = 0x54, target_room = 0x55, connection_requirements = {"Moving Platforms from Magnetic Panels": [[]], "Mech Arena from Magnetic Panels": [["Electro Magnet"], ["*Boost Fly", "*Expert"], ["*Air Crawl"]]}),
-        RoomEntrance(name = "Magnetic Panels from Mech Arena", trigger_pos = [0x447d20e2, 0x4352d244, 0x43ec7398], dest_room = "MOO_C1", dest_spawn = "spawn_c1_2", source_room = 0x56, target_room = 0x55, connection_requirements = {"Moving Platforms from Magnetic Panels": [["Electro Magnet"], ["*Boost Fly", "*Expert"], ["*Air Crawl"]], "Mech Arena from Magnetic Panels": [[]]}),
+        RoomEntrance(name = "Magnetic Panels from Mech Arena", trigger_pos = [0x447d20e2, 0x4352d244, 0x43ec7398], dest_room = "MOO_C1", dest_spawn = "spawn_c1_2", source_room = 0x56, target_room = 0x55, connection_requirements = {"Moving Platforms from Magnetic Panels": [["*Air Crawl"]], "Mech Arena from Magnetic Panels": [[]]}),
 
         #Mech Arena
         RoomEntrance(name = "Mech Arena from Magnetic Panels", trigger_pos = [0x446fe3d8, 0x434944d0, 0x43dab531], dest_room = "MOO_C2", dest_spawn = "spawn_c2_1", can_start = True, source_room = 0x55, target_room = 0x56, connection_requirements = {"Magnetic Panels from Mech Arena": [[]], "Entry from Mech Arena": [[]]}),
