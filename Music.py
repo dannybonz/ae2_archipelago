@@ -21,7 +21,7 @@ music_table = {
     0x1D: {"value": 0x09, "address": {"PAL": 0x3B1F18, "NTSC": 0x3B0A18}}, #The Blue Baboon
     0x1E: {"value": 0x09, "address": {"PAL": 0x3B1F58, "NTSC": 0x3B0A58}}, #The Blue Baboon (Changing Hut)
     0x1F: {"value": 0x09, "address": {"PAL": 0x3B1FD8, "NTSC": 0x3B0AD8}}, #The Blue Baboon (Bananarang)
-    0x21: {"value": 0x09, "address": {"PAL": 0x3B1F98, "NTSC": 0x3B0A98}}, #The Blue Baboon (Ship)
+    0x21: {"value": 0x09, "address": {"PAL": 0x3B2019, "NTSC": 0x3B0B19}}, #The Blue Baboon (Ship)
     0x22: {"value": 0x0A, "address": {"PAL": 0x3B2058, "NTSC": 0x3B0B58}}, #Lookout Valley
     0x23: {"value": 0x0A, "address": {"PAL": 0x3B2098, "NTSC": 0x3B0B98}}, #Lookout Valley (Jungle)
     0x24: {"value": 0x0A, "address": {"PAL": 0x3B20D8, "NTSC": 0x3B0BD8}}, #Lookout Valley (Cave)
@@ -29,7 +29,7 @@ music_table = {
     0x26: {"value": 0x0B, "address": {"PAL": 0x3B2158, "NTSC": 0x3B0C58}}, #Snowball Mountain (Christmas Tree)
     0x27: {"value": 0x0C, "address": {"PAL": 0x3B2198, "NTSC": 0x3B0C98}}, #Snowball Mountain (Ski Hill)
     0x28: {"value": 0x0D, "address": {"PAL": 0x3B21D8, "NTSC": 0x3B0CD8}}, #Enter The Monkey
-    0x29: {"value": 0x0D, "address": {"PAL": 0x3B21D8, "NTSC": 0x3B0CD8}}, #Enter The Monkey (Inside)
+    0x29: {"value": 0x0D, "address": {"PAL": 0x3B2218, "NTSC": 0x3B0D18}}, #Enter The Monkey (Inside)
     0x2A: {"value": 0x0D, "address": {"PAL": 0x3B2258, "NTSC": 0x3B0D58}}, #Enter The Monkey (Wall)
     0x2C: {"value": 0x0E, "address": {"PAL": 0x3B22D8, "NTSC": 0x3B0DD8}}, #Simian Citadel
     0x2D: {"value": 0x0E, "address": {"PAL": 0x3B2318, "NTSC": 0x3B0E18}}, #Simian Citadel (Bullring)

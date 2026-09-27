@@ -219,7 +219,7 @@ levels = [
 
         #Bullring
         RoomEntrance(name = "Bullring from Entry", trigger_pos = [0xbfccac1b, 0x4333031b, 0xc416674b], dest_room = "GRE_A1", dest_spawn = "spawn_a1_1", can_start = True, source_room = 0x2C, target_room = 0x2D, connection_requirements = {"Entry from Bullring": [[]], "Whale from Bullring": [["Dash Hoop", "*Bull Fight"], ["*Bull Fight", "*Hard"], ["*Air Crawl", "*Hard"]]}), 
-        RoomEntrance(name = "Bullring from Whale", trigger_pos = [0xc3062655, 0xc3227f86, 0xc39755a8], dest_room = "GRE_A1", dest_spawn = "spawn_a1_1", source_room = 0x2E, target_room = 0x2D, connection_requirements = {"Entry from Bullring": [["Dash Hoop", "*Bull Fight"], ["*Bull Fight", "*Hard"], ["*Air Crawl", "*Hard"]], "Whale from Bullring": [[]]}), 
+        RoomEntrance(name = "Bullring from Whale", trigger_pos = [0xc3062655, 0xc3227f86, 0xc39755a8], dest_room = "GRE_A1", dest_spawn = "spawn_a1_1", source_room = 0x2E, target_room = 0x2D, connection_requirements = {"Entry from Bullring": [["*Air Crawl"]], "Whale from Bullring": [[]]}), 
 
         #Whale
         RoomEntrance(name = "Whale from Bullring", trigger_pos = [0xc4a50b0a, 0x4348ccc1, 0xc4e357d0], dest_room = "GRE_B", dest_spawn = "spawn_b_1", can_start = True, source_room = 0x2D, target_room = 0x2E, connection_requirements = {"Submarine from Whale": [["Sky Flyer", "Water Net", "*Attack"], ["Sky Flyer", "*Hard"], ["*Air Crawl"]], "Bullring from Whale": [[]]}), 
