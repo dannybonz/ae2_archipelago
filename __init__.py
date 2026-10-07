@@ -85,7 +85,14 @@ class AE2World(World):
 
         #Power Punch
         "Magic Punch": {"Power Punch"},
-        "Punch": {"Power Punch"}
+        "Punch": {"Power Punch"},
+
+        #Filler item groups
+        "Coins": {"Gold Coin", "10 Gold Coins", "20 Gold Coins"},
+        "Ammo": {"Explosive Pellet", "Guided Pellet", "3 Explosive Pellets", "3 Guided Pellets"},
+        "Health": {"Cookie", "Deluxe Cookie"},
+        "Filler": {item_name for item_name, item_id in item_id_from_name.items() if (200 < item_id < 300) or (item_id > 999)},
+        "Traps": {"Lazy Camera Trap", "Rocket Boots Trap", "Slowness Trap"},
     }
 
     location_name_groups = location_groups
@@ -306,14 +313,14 @@ class AE2World(World):
     
     def create_item(self, name: str) -> AE2Item:
         try:
-            if name == self.glitches_item_name or name in self.starting_items or name in self.preplaced_progression or name in self.progression_item_names:
-                item_classification = ItemClassification.progression
-            elif name in self.useful_item_names:
-                item_classification = ItemClassification.useful
+            if name in self.filler_item_names:
+                item_classification = ItemClassification.filler
             elif name in self.trap_item_names:
                 item_classification = ItemClassification.trap
+            elif name in self.useful_item_names:
+                item_classification = ItemClassification.useful
             else:
-                item_classification = ItemClassification.filler
+                item_classification = ItemClassification.progression
         except:
             item_classification = ItemClassification.progression
 

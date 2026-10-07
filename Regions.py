@@ -8,23 +8,26 @@ from .Monkeys import monkey_from_name
 import copy
 
 def can_reach_connection(state, world, player, requirements):
+
+    has_catapult = state.has("Catapult", player) or state.has("Progressive Catapult", player)
+
     if state.has("Glitched Item", player):
         hard = True
         expert = True
-        air_crawl = (state.has("Catapult", player) and state.has("Air Crawl", player)) or state.has("Progressive Catapult", player, 2)
+        air_crawl = (has_catapult and state.has("Air Crawl", player)) or state.has("Progressive Catapult", player, 2)
         long_jump = state.has("Dash Hoop", player)
         boost_fly = state.has("Sky Flyer", player)
         damage_boost = True
-        boost_jump = state.has("Monkey Net", player) and (state.has("Stun Club", player) or state.has("Monkey Radar", player) or state.has("Dash Hoop", player) or state.has(world.get_catapult_item_name(), player) or state.has("Sky Flyer", player) or state.has("R.C. Car", player) or state.has("Bananarang", player) or state.has("Water Cannon", player) or state.has("Electro Magnet", player) or state.has("Power Punch", player))
+        boost_jump = state.has("Monkey Net", player) and (state.has("Stun Club", player) or state.has("Monkey Radar", player) or state.has("Dash Hoop", player) or has_catapult or state.has("Sky Flyer", player) or state.has("R.C. Car", player) or state.has("Bananarang", player) or state.has("Water Cannon", player) or state.has("Electro Magnet", player) or state.has("Power Punch", player))
         hidden_monkey_logic = False
     else:
         hard = world.options.logic_difficulty.value > 0
         expert = world.options.logic_difficulty.value > 1
-        air_crawl = ((state.has("Catapult", player) and state.has("Air Crawl", player)) or state.has("Progressive Catapult", player, 2)) and world.options.air_crawl_logic.value
+        air_crawl = ((has_catapult and state.has("Air Crawl", player)) or state.has("Progressive Catapult", player, 2)) and world.options.air_crawl_logic.value
         long_jump = state.has("Dash Hoop", player) and world.options.long_jump_logic.value
         boost_fly = state.has("Sky Flyer", player) and world.options.boost_fly_logic.value and (state.has("Monkey Net", player) or state.has("Electro Magnet", player) or state.has("Stun Club", player) or state.has("Power Punch", player))
         damage_boost = world.options.damage_boost_logic.value
-        boost_jump = state.has("Monkey Net", player) and world.options.boost_jump_logic.value and (state.has("Stun Club", player) or state.has("Monkey Radar", player) or state.has("Dash Hoop", player) or state.has(world.get_catapult_item_name(), player) or state.has("Sky Flyer", player) or state.has("R.C. Car", player) or state.has("Bananarang", player) or state.has("Water Cannon", player) or state.has("Electro Magnet", player) or state.has("Power Punch", player))
+        boost_jump = state.has("Monkey Net", player) and world.options.boost_jump_logic.value and (state.has("Stun Club", player) or state.has("Monkey Radar", player) or state.has("Dash Hoop", player) or has_catapult or state.has("Sky Flyer", player) or state.has("R.C. Car", player) or state.has("Bananarang", player) or state.has("Water Cannon", player) or state.has("Electro Magnet", player) or state.has("Power Punch", player))
         hidden_monkey_logic = world.options.hidden_monkey_logic.value
 
     requirements = copy.deepcopy(requirements) #Fixes a UT oddity
@@ -42,10 +45,10 @@ def can_reach_connection(state, world, player, requirements):
         while "*Boost Jump" in item_group and boost_jump:
             item_group.remove("*Boost Jump")
 
-        while "*Bull Fight" in item_group and (state.has(world.get_catapult_item_name(), player) or state.has("Stun Club", player) or state.has("Power Punch", player) or state.has("Dash Hoop", player) or (state.has("Sky Flyer", player) and expert)): #To attack the monkeys that get in bulls
+        while "*Bull Fight" in item_group and (has_catapult or state.has("Stun Club", player) or state.has("Power Punch", player) or state.has("Dash Hoop", player) or (state.has("Sky Flyer", player) and expert)): #To attack the monkeys that get in bulls
             item_group.remove("*Bull Fight")
 
-        while "*UFO" in item_group and (hard or state.has(world.get_catapult_item_name(), player) or state.has("Stun Club", player) or state.has("Power Punch", player)): #To attack the monkeys that get in UFOs
+        while "*UFO" in item_group and (hard or has_catapult or state.has("Stun Club", player) or state.has("Power Punch", player)): #To attack the monkeys that get in UFOs
             item_group.remove("*UFO")
 
         while "*Gear" in item_group and (state.has("Stun Club", player) or state.has("Power Punch", player)): #To spin gears
@@ -66,12 +69,12 @@ def can_reach_connection(state, world, player, requirements):
         while "*Expert" in item_group and expert:
             item_group.remove("*Expert")
 
-        while "*Non-Net" in item_group and (state.has("Stun Club", player) or state.has("Monkey Radar", player) or state.has("Dash Hoop", player) or state.has(world.get_catapult_item_name(), player) or state.has("Sky Flyer", player) or state.has("R.C. Car", player) or state.has("Bananarang", player) or state.has("Water Cannon", player) or state.has("Electro Magnet", player) or state.has("Power Punch", player)):
+        while "*Non-Net" in item_group and (state.has("Stun Club", player) or state.has("Monkey Radar", player) or state.has("Dash Hoop", player) or has_catapult or state.has("Sky Flyer", player) or state.has("R.C. Car", player) or state.has("Bananarang", player) or state.has("Water Cannon", player) or state.has("Electro Magnet", player) or state.has("Power Punch", player)):
             item_group.remove("*Non-Net")
 
         #Lookout Valley
-        while "*Valley Gap" in item_group and ((state.has("Sky Flyer", player) and state.has(world.get_catapult_item_name(), player)) or
-                                            (expert and ((((state.has("Power Punch", player) or state.has("Sky Flyer", player)) and state.has("Water Net", player))) or state.has(world.get_catapult_item_name(), player))) or 
+        while "*Valley Gap" in item_group and ((state.has("Sky Flyer", player) and has_catapult) or
+                                            (expert and ((((state.has("Power Punch", player) or state.has("Sky Flyer", player)) and state.has("Water Net", player))) or has_catapult)) or 
                                             (air_crawl) or 
                                             (expert and long_jump and (state.has("Pipotchi", player) or state.has("Stun Club", player)))):
             item_group.remove("*Valley Gap")
@@ -87,7 +90,7 @@ def can_reach_connection(state, world, player, requirements):
                                             (air_crawl)):
             item_group.remove("*Valley Boat")
 
-        while "*Valley Button" in item_group and (state.has(world.get_catapult_item_name(), player) or
+        while "*Valley Button" in item_group and (has_catapult or
                                             (hard and state.has("Water Net", player) and (state.has("Sky Flyer", player) or state.has("Stun Club", player))) or 
                                             (air_crawl)):
             item_group.remove("*Valley Button")
@@ -98,7 +101,7 @@ def can_reach_connection(state, world, player, requirements):
             item_group.remove("*Valley Stalag")
 
         #Panic Pyramid
-        while "*Pyramid Sarcophagus" in item_group and (state.has(world.get_catapult_item_name(), player) or
+        while "*Pyramid Sarcophagus" in item_group and (has_catapult or
                                             (boost_fly and state.has("Sky Flyer", player) and hard)):
             item_group.remove("*Pyramid Sarcophagus")
 
@@ -108,9 +111,8 @@ def can_reach_connection(state, world, player, requirements):
                                             (air_crawl)):
             item_group.remove("*Moon Fire")
 
-        if "Catapult" in item_group and "Catapult" != world.get_catapult_item_name():
+        while "Catapult" in item_group and has_catapult:
             item_group.remove("Catapult")
-            item_group.append(world.get_catapult_item_name())
 
     return any(all(state.has(item, player) for item in item_group) for item_group in requirements)
 
